@@ -34,7 +34,7 @@ public class RobotContainer {
   private void configureBindings() {
     drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
         drivetrain.applyRequest(() -> drive.withVelocityX(controllerBindings.getDriveXValue() * MaxSpeed)
-            .withVelocityY(controllerBindings.getDriveXValue() * MaxSpeed) 
+            .withVelocityY(controllerBindings.getDriveYValue() * MaxSpeed) 
             .withRotationalRate(controllerBindings.getDriveTurnValue() * MaxAngularRate)
         ));
 

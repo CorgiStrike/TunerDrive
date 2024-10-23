@@ -25,7 +25,7 @@ public class RealControllerBindings implements ControllerBindings {
 
   @Override
   public double getDriveTurnValue() {
-    return leftFlightStick.getRawAxis(0);
+    return -leftFlightStick.getRawAxis(0);
   }
 
   @Override

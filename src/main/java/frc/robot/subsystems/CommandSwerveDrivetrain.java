@@ -14,6 +14,8 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -32,6 +34,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private Vision vision;
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
+    private Field2d field = new Field2d();
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private final Rotation2d BlueAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
@@ -57,11 +60,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     private void initVision() {
         camSettings = List.of(
+            //Constants.Vision.LEFT_SHOOTER_CAM,
+            //Constants.Vision.RIGHT_SHOOTER_CAM,
             Constants.Vision.LEFT_INTAKE_CAM,
-            Constants.Vision.RIGHT_INTAKE_CAM,
-            Constants.Vision.LEFT_SHOOTER_CAM,
-            Constants.Vision.RIGHT_SHOOTER_CAM);
+            Constants.Vision.RIGHT_INTAKE_CAM
+            );
         vision = new Vision(camSettings);
+        SmartDashboard.putData("Vision Pose", field);
     }
 
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
@@ -87,7 +92,10 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         var pose = vision.getRobotPose();
         if (pose != null) {
             Pose3d rawPose = pose.estimatedPose;
-            this.addVisionMeasurement(new Pose2d(rawPose.getX(),rawPose.getY(),new Rotation2d(rawPose.getRotation().getZ())), pose.timestampSeconds);
+            Pose2d calcPose = new Pose2d(rawPose.getX(),rawPose.getY(),new Rotation2d(rawPose.getRotation().getZ()));
+            field.setRobotPose(calcPose);
+            this.addVisionMeasurement(calcPose, pose.timestampSeconds);
+        
         }
     }
 

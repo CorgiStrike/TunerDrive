@@ -9,6 +9,7 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Constants;
@@ -95,8 +96,12 @@ public class Vision {
                 PhotonTrackedTarget tag = result.getBestTarget();
                 // make sure correct field/tags are being used
                 if (Constants.Vision.FIELD_LAYOUT.getTagPose(tag.getFiducialId()).isPresent()) {
-                    lastEstimation = poseEstimator.update().get();
-                    
+                    var est = poseEstimator.update();
+                    if(!est.isEmpty()) {
+                        lastEstimation = est.get();
+                        var rPose = lastEstimation.estimatedPose;
+                        lastEstimation = new EstimatedRobotPose(new Pose3d(rPose.getX(),rPose.getY(),rPose.getZ(),new Rotation3d(0,rPose.getRotation().getY(),rPose.getRotation().getZ()+this.camPose.getRotation().getZ())), lastEstimation.timestampSeconds, lastEstimation.targetsUsed, lastEstimation.strategy);
+                    }
                 }
             }
             return lastEstimation;
@@ -107,6 +112,7 @@ public class Vision {
             Double avgAmbiguity = 0.0;
             Integer numTargets = 0;
             if(lastEstimation==null) return 1.0;
+            if (lastEstimation.targetsUsed==null) return 1.0;
             for(var tag : lastEstimation.targetsUsed) {
                 avgAmbiguity += tag.getPoseAmbiguity();
                 numTargets++;

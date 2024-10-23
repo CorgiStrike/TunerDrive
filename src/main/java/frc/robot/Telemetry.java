@@ -10,6 +10,7 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,6 +20,8 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 public class Telemetry {
     private final double MaxSpeed;
 
+    private Field2d field = new Field2d();
+
     /**
      * Construct a telemetry object, with the specified max speed of the robot
      * 
@@ -26,6 +29,7 @@ public class Telemetry {
      */
     public Telemetry(double maxSpeed) {
         MaxSpeed = maxSpeed;
+        SmartDashboard.putData("Field",field);
     }
 
     /* What to publish over networktables for telemetry */
@@ -77,6 +81,7 @@ public class Telemetry {
     public void telemeterize(SwerveDriveState state) {
         /* Telemeterize the pose */
         Pose2d pose = state.Pose;
+        field.setRobotPose(new Pose2d(pose.getX()/2,pose.getY()/2,pose.getRotation()));
         fieldTypePub.set("Field2d");
         fieldPub.set(new double[] {
             pose.getX(),
