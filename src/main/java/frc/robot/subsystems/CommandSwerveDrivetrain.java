@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.Utils;
@@ -8,6 +9,8 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -15,6 +18,9 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.Constants;
+import frc.robot.Vision.Vision;
+import frc.robot.Vision.Vision.PVCamera;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements
@@ -22,6 +28,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
  */
 public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsystem {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
+    private List<PVCamera> camSettings;
+    private Vision vision;
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
 
@@ -37,12 +45,23 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        initVision();
     }
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, SwerveModuleConstants... modules) {
         super(driveTrainConstants, modules);
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        initVision();
+    }
+
+    private void initVision() {
+        camSettings = List.of(
+            Constants.Vision.LEFT_INTAKE_CAM,
+            Constants.Vision.RIGHT_INTAKE_CAM,
+            Constants.Vision.LEFT_SHOOTER_CAM,
+            Constants.Vision.RIGHT_SHOOTER_CAM);
+        vision = new Vision(camSettings);
     }
 
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
@@ -64,6 +83,14 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
+    private void updateVisionPose() {
+        var pose = vision.getRobotPose();
+        if (pose != null) {
+            Pose3d rawPose = pose.estimatedPose;
+            this.addVisionMeasurement(new Pose2d(rawPose.getX(),rawPose.getY(),new Rotation2d(rawPose.getRotation().getZ())), pose.timestampSeconds);
+        }
+    }
+
     @Override
     public void periodic() {
         /* Periodically try to apply the operator perspective */
@@ -79,5 +106,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
                 hasAppliedOperatorPerspective = true;
             });
         }
+        updateVisionPose();
     }
 }
