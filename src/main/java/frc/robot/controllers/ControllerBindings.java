@@ -12,6 +12,10 @@ public interface ControllerBindings {
 
   Trigger resetGyro();
 
+  Trigger autoIntake();
+
+  Trigger manualIntake();
+
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }

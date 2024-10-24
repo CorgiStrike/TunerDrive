@@ -26,6 +26,7 @@ public final class Constants {
   public static class Controller {
     public static final int LEFT_FLIGHT_STICK_ID = 0;
     public static final int RIGHT_FLIGHT_STICK_ID = 1;
+    public static final int GAMEPAD_ID = 2;
   }
   
   public static class AutoConstants
@@ -34,6 +35,10 @@ public final class Constants {
     public static final PIDConstants ANGLE_PID   = new PIDConstants(0.6, 0, 0.01);
   }
 
+  public static class Drivetrain {
+    
+    public static final double MAX_ANGULAR_RATE = 4 * Math.PI;
+  }
   public static final class Vision {
 
     public static Double AMBIGUITY_THRESHHOLD = 0.4;
