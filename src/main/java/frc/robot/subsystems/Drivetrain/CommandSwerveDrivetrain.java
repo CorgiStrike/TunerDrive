@@ -42,11 +42,11 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         return run(swerveDrive.getRequestRunnable(requestSupplier));
     }
 
-    private void drive(double maxSpeed, double maxAngularRate, Supplier<Double> xValue, Supplier<Double> yValue, Supplier<Double> turnValue) {
+    private void drive(double maxSpeed, double maxAngularRate, Double xValue, Double yValue, Double turnValue) {
         final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // field-centric driving in open loop
-        applyRequest(()->drive.withVelocityX(xValue.get()).withVelocityY(yValue.get()).withRotationalRate(turnValue.get()));
+        applyRequest(()->drive.withVelocityX(xValue).withVelocityY(yValue).withRotationalRate(turnValue));
     }
 
     public void configureBindings(Supplier<Double> xSupplier, Supplier<Double> ySupplier, Supplier<Double> turnSupplier) {
@@ -71,7 +71,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         registerStateCommand(State.IDLE, new RunCommand(() -> swerveDrive.periodic()));
         registerStateCommand(State.TRAVERSING, new RunCommand(() -> {
             swerveDrive.periodic();
-            drive(maxSpeed, maxAngularRate, xSupplier, ySupplier, turnSupplier);
+            drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnSupplier.get());
         }));
         registerStateCommand(State.AUTO_INTAKE, new RunCommand(() -> {
             autoIntakeDrive();
@@ -80,7 +80,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
     }
 
     private void autoIntakeDrive() {
-        
+
     }
 
     public enum State {
