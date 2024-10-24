@@ -12,8 +12,8 @@ public class Intake extends StateMachine<Intake.State> {
     }
 
     private void registerStateTransitions() {
-        addTransition(State.IDLE, State.INTAKE);
-        addTransition(State.IDLE, State.EJECT);
+        addOmniTransition(State.EJECT);
+        addOmniTransition(State.INTAKE);
         addOmniTransition(State.IDLE);
     }
 
