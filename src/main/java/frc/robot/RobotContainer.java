@@ -13,11 +13,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import frc.robot.controllers.RealControllerBindings;
+import frc.robot.SMF.StateMachine;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
-public class RobotContainer {
+public class RobotContainer extends StateMachine<RobotContainer.State>{
   private double MaxSpeed = TunerConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
   private double MaxAngularRate = 4 * Math.PI; // 3/4 of a rotation per second max angular velocity
   private RealControllerBindings controllerBindings = new RealControllerBindings();
@@ -39,19 +41,46 @@ public class RobotContainer {
         ));
 
     // reset the field-centric heading on left bumper press
-    controllerBindings.resetGyro().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+    controllerBindings.resetGyro().onTrue(drivetrain.runOnce(() -> drivetrain.swerveDrive.seedFieldRelative()));
 
     if (Utils.isSimulation()) {
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
+      drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
-    drivetrain.registerTelemetry(logger::telemeterize);
+    drivetrain.swerveDrive.registerTelemetry(logger::telemeterize);
   }
 
   public RobotContainer() {
+    super("RobotContainer", State.UNDETERMINED, State.class);
     configureBindings();
+  }
+
+  private void registerStateCommands() {
+    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
+      
+    ));
+  }
+
+  private void registerStateTransitions() {
+
+
+    addOmniTransition(State.SOFT_E_STOP);
+    addOmniTransition(State.TRAVERSING);
+  }
+
+
+  @Override
+  protected void determineSelf() {
+    setState(State.SOFT_E_STOP);
   }
 
   public Command getAutonomousCommand() {
     return Commands.print("No autonomous command configured");
+  }
+
+  public enum State {
+    UNDETERMINED,
+    AUTONOMOUS,
+    TRAVERSING,
+    SOFT_E_STOP
   }
 }
