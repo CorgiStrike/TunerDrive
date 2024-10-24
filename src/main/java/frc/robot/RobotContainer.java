@@ -11,13 +11,17 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
-public class RobotContainer {
+public class RobotContainer{
+
+  private PowerDistribution pd;
   private double MaxSpeed = TunerConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
   private double MaxAngularRate = 4 * Math.PI; // 3/4 of a rotation per second max angular velocity
   private RealControllerBindings controllerBindings = new RealControllerBindings();
@@ -51,7 +55,7 @@ public class RobotContainer {
     configureBindings();
   }
 
-  public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    public Command getAutonomousCommand() {
+      return Commands.print("No autonomous command configured");
+    }
   }
-}
