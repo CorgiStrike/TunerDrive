@@ -1,9 +1,13 @@
 package frc.robot.subsystems.Intake;
 
+import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.SMF.StateMachine;
 
 public class Intake extends StateMachine<Intake.State> {
 
+    private final IntakeIO io = new IntakeIOReal();
+
+    private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
     public Intake() {
         super("Intake", State.UNDETERMINED, State.class);
@@ -18,7 +22,19 @@ public class Intake extends StateMachine<Intake.State> {
     }
 
     private void registerStateCommands() {
+        registerStateCommand(State.IDLE, new SequentialCommandGroup(new InstantCommand(io::stop), watchProxCommand()));
+
         
+    }
+
+    private Command watchProxCommand(){
+        return new RunCommand(
+            () -> {if (inputs.proxTripped){
+                setFlag(State.PROX_TRIPPED);
+            }else{
+                clearFlag(State.PROX_TRIPPED);
+            }
+            });
     }
 
     @Override
@@ -30,6 +46,9 @@ public class Intake extends StateMachine<Intake.State> {
         UNDETERMINED,
         IDLE,
         INTAKE,
-        EJECT
+        EJECT,
+
+        //flag
+        PROX_TRIPPED
     }
 }
