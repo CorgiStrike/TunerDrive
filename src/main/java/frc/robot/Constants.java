@@ -15,12 +15,10 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 
 import frc.robot.Motors.tuning.LoggedTunablePIDSV;
 import frc.robot.Motors.talonfx.PIDSVGains;
-import frc.robot.subsystems.Drivetrain.OdometryBoundingBox;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -33,10 +31,6 @@ import frc.robot.subsystems.Drivetrain.OdometryBoundingBox;
 public final class Constants {
 
   public static final boolean ALLOW_TUNING = true;
-
-  public static final OdometryBoundingBox FIELD_BOUNDING_BOX =
-        new OdometryBoundingBox(
-            new Translation2d(), new Translation2d(Units.feetToMeters(54), Units.feetToMeters(27)));
 
   public static final CurrentLimitsConfigs DEFAULT_CURRENT_LIMIT =
       new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withSupplyCurrentLimitEnable(true);
