@@ -17,6 +17,9 @@ import frc.robot.SMF.StateMachine;
  * subsystem so it can be used in command-based projects easily.
  */
 public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrain.State>{
+
+    protected OdometryBoundingBox odometryBoundingBox;
+
     public final SwerveDrive swerveDrive;
     private double maxSpeed = 0.0, maxAngularRate = 0.0;
     private Supplier<Double> xSupplier = null, ySupplier = null, turnSupplier = null;
@@ -78,6 +81,11 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
             swerveDrive.periodic();
         }));
     }
+    
+    public void setOdometryBoundingBox(OdometryBoundingBox odometryBoundingBox) {
+        this.odometryBoundingBox = odometryBoundingBox;
+    }
+    
 
     private void autoIntakeDrive() {
 

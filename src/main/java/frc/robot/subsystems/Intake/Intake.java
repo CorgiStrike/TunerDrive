@@ -24,7 +24,6 @@ public class Intake extends StateMachine<Intake.State> {
     private void registerStateCommands() {
         registerStateCommand(State.IDLE, new SequentialCommandGroup(new InstantCommand(io::stop), watchProxCommand()));
 
-        
     }
 
     private Command watchProxCommand(){
