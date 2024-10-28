@@ -11,7 +11,7 @@ import frc.robot.Sensor.ProxSensor;
 
 public class IntakeIOReal implements IntakeIO{
     protected final VelocityTalonFX topMotor =
-        new VelocityTalonFX(Hardware.TOP_ID, Hardware.TOP_GAINS, Hardware.topRatio);
+        new VelocityTalonFX(Hardware.TOP_ID,Hardware.TOP_GAINS, Hardware.topRatio);
     protected final VelocityTalonFX bottomMotor =
         new VelocityTalonFX(Hardware.BOTTOM_ID, Hardware.TOP_GAINS, Hardware.bottomRatio);
 
@@ -25,8 +25,6 @@ public class IntakeIOReal implements IntakeIO{
         if (!sim) configureCurrentLimits();
 
         configureHardware();
-
-        Hardware.TOP_GAINS.setOnChange(this::setGains);
     }
 
     private void configureCurrentLimits(){

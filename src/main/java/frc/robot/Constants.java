@@ -122,10 +122,8 @@ public final class Constants {
     public static final NeutralModeValue NEUTRAL_MODE = NeutralModeValue.Brake;
 
 
-    public static final LoggedTunablePIDSV TOP_GAINS =
-          new LoggedTunablePIDSV(
-              "Intake Belt Gains", new PIDSVGains(0.5, 0, 0, 0.2469, 0.1237), () -> ALLOW_TUNING);
-
+    public static final PIDSVGains TOP_GAINS =
+          new PIDSVGains(0.5, 0, 0, 0.2469, 0.1237);
     }
   }
 }
