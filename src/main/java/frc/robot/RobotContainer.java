@@ -24,7 +24,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
-  private final Intake intake = new Intake(new IntakeIOReal());
+  //private final Intake intake = new Intake(new IntakeIOReal());
 
   private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
 
@@ -72,30 +72,36 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   }
 
   private void registerStateCommands() {
-    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
-      intake.transitionCommand(Intake.State.IDLE)
+   registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE)//,
+      //intake.transitionCommand(Intake.State.IDLE)
     ));
 
     registerStateCommand(State.GROUND_INTAKE, 
     new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.INTAKE)));
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)//,
+      //intake.transitionCommand(Intake.State.INTAKE)
+      ));
 
     registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.EJECT)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)//,
+      //intake.transitionCommand(Intake.State.EJECT)
     ));
     
     registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.IDLE)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)//,
+      //intake.transitionCommand(Intake.State.IDLE)
     ));
   }
 
   @Override
   protected void determineSelf() {
     setState(State.SOFT_E_STOP);
+  }
+
+  @Override
+  protected void onTeleopStart() {
+    setState(State.TRAVERSING);
   }
 
   public Command getAutonomousCommand() {
