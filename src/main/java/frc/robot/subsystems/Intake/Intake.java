@@ -3,6 +3,8 @@ package frc.robot.subsystems.Intake;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.SMF.StateMachine;
 
+import frc.robot.Constants.Intake.Hardware;
+
 public class Intake extends StateMachine<Intake.State> {
 
     private final IntakeIO io = new IntakeIOReal();
@@ -24,7 +26,17 @@ public class Intake extends StateMachine<Intake.State> {
     private void registerStateCommands() {
         registerStateCommand(State.IDLE, new SequentialCommandGroup(new InstantCommand(io::stop), watchProxCommand()));
 
-        
+        registerStateCommand(State.INTAKE, 
+        new SequentialCommandGroup(
+            new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.BELT_SPEED)),
+            new ParallelCommandGroup(
+                new SequentialCommandGroup(
+                    
+                ),
+
+
+                watchProxCommand())
+        ));        
     }
 
     private Command watchProxCommand(){
