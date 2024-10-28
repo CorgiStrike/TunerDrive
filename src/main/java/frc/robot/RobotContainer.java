@@ -5,53 +5,109 @@
 package frc.robot;
 
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake.Intake;
+import frc.robot.subsystems.Intake.IntakeIOReal;
 
-public class RobotContainer {
-  private double MaxSpeed = TunerConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
-  private double MaxAngularRate = 4 * Math.PI; // 3/4 of a rotation per second max angular velocity
+public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
-  private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain; // My drivetrain
+  private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
+  private final Intake intake = new Intake(new IntakeIOReal());
 
-  private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-      .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
-      .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // I want field-centric
-                                                               // driving in open loop
-
-  private final Telemetry logger = new Telemetry(MaxSpeed);
+  private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
 
   private void configureBindings() {
-    drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(() -> drive.withVelocityX(controllerBindings.getDriveXValue() * MaxSpeed)
-            .withVelocityY(controllerBindings.getDriveYValue() * MaxSpeed) 
-            .withRotationalRate(controllerBindings.getDriveTurnValue() * MaxAngularRate)
-        ));
+    drivetrain.configureBindings(controllerBindings::getDriveXValue, controllerBindings::getDriveYValue, controllerBindings::getDriveTurnValue);
 
     // reset the field-centric heading on left bumper press
-    controllerBindings.resetGyro().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+    controllerBindings.resetGyro().onTrue(drivetrain.runOnce(() -> drivetrain.swerveDrive.seedFieldRelative()));
+
+    controllerBindings.manualIntake()
+    .onTrue(transitionCommand(State.GROUND_INTAKE, false))
+    .onFalse(
+            new ConditionalCommand(
+                transitionCommand(State.TRAVERSING, false),
+                Commands.none(),
+                () -> getState() == State.GROUND_INTAKE));
+
+    controllerBindings.intakeEject()
+    .onTrue(transitionCommand(State.GROUND_EJECT, false))
+    .onFalse(
+      new ConditionalCommand(
+          transitionCommand(State.TRAVERSING, false),
+          Commands.none(),
+          () -> getState() == State.GROUND_EJECT));
 
     if (Utils.isSimulation()) {
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
+      drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
-    drivetrain.registerTelemetry(logger::telemeterize);
+    drivetrain.swerveDrive.registerTelemetry(logger::telemeterize);
   }
 
   public RobotContainer() {
+    super("RobotContainer", State.UNDETERMINED, State.class);
     configureBindings();
+    registerStateTransitions();
+    registerStateCommands();
+  }
+
+  private void registerStateTransitions() {
+    addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
+    addTransition(State.TRAVERSING, State.GROUND_INTAKE);
+
+    addOmniTransition(State.SOFT_E_STOP);
+    addOmniTransition(State.TRAVERSING);
+  }
+
+  private void registerStateCommands() {
+    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
+      intake.transitionCommand(Intake.State.IDLE)
+    ));
+
+    registerStateCommand(State.GROUND_INTAKE, 
+    new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.INTAKE)));
+
+    registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.EJECT)
+    ));
+    
+    registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.IDLE)
+    ));
+  }
+
+  @Override
+  protected void determineSelf() {
+    setState(State.SOFT_E_STOP);
   }
 
   public Command getAutonomousCommand() {
     return Commands.print("No autonomous command configured");
+  }
+
+  public enum State {
+    UNDETERMINED,
+    SOFT_E_STOP,
+    TRAVERSING,
+    AUTO_GROUND_INTAKE,
+    GROUND_INTAKE,
+    GROUND_EJECT
   }
 }

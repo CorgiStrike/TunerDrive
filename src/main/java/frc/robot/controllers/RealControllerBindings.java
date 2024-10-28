@@ -1,7 +1,9 @@
 package frc.robot.controllers;
 
-// import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-// import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.HID.CommandFlightStick;
@@ -12,6 +14,8 @@ public class RealControllerBindings implements ControllerBindings {
       new CommandFlightStick(Constants.Controller.LEFT_FLIGHT_STICK_ID);
   private final CommandFlightStick rightFlightStick =
       new CommandFlightStick(Constants.Controller.RIGHT_FLIGHT_STICK_ID);
+  private final CommandXboxController gamepad =
+      new CommandXboxController(Constants.Controller.GAMEPAD_ID);
 
   @Override
   public double getDriveXValue() {
@@ -36,5 +40,20 @@ public class RealControllerBindings implements ControllerBindings {
   @Override
   public Trigger resetGyro() {
     return rightFlightStick.topLeft();
+  }
+
+  @Override
+  public Trigger autoIntake() {
+    return rightFlightStick.trigger();
+  }
+
+  @Override
+  public Trigger manualIntake() {
+    return gamepad.a();
+  }
+
+  @Override
+  public Trigger intakeEject() {
+    return gamepad.b();
   }
 }
