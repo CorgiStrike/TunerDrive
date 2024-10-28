@@ -24,7 +24,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
-  //private final Intake intake = new Intake(new IntakeIOReal());
+  private final Intake intake = new Intake(new IntakeIOReal());
 
   private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
 

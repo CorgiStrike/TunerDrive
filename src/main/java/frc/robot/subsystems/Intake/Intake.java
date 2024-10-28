@@ -1,7 +1,10 @@
 package frc.robot.subsystems.Intake;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.SMF.StateMachine;
+import frc.robot.WhileDisabledInstantCommand;
 
 import frc.robot.Constants.Intake.Hardware;
 
@@ -15,6 +18,12 @@ public class Intake extends StateMachine<Intake.State> {
         super("Intake", State.UNDETERMINED, State.class);
 
         this.io = io;
+
+        new WaitCommand(2)
+        .andThen(new WhileDisabledInstantCommand(() -> io.resetFollower()))
+        .schedule();
+
+        io.updateInputs(inputs);
 
         registerStateCommands();
         registerStateTransitions();
@@ -61,7 +70,14 @@ public class Intake extends StateMachine<Intake.State> {
     }
 
     @Override
+    protected void update() {
+        io.updateInputs(inputs);
+        Logger.processInputs(getName(), inputs);
+    }
+
+    @Override
     protected void determineSelf() {
+        io.resetFollower();
         setState(State.IDLE);
     }
 
