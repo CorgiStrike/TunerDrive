@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
@@ -25,11 +26,9 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
-  //private final Intake intake = new Intake(new IntakeIOReal());
+  private final Intake intake = new Intake(new IntakeIOReal());
 
   private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
-
-  private State state = State.UNDETERMINED;
 
   private void configureBindings() {
     drivetrain.configureBindings(controllerBindings::getDriveXValue, controllerBindings::getDriveYValue, controllerBindings::getDriveTurnValue);
@@ -61,7 +60,11 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   public RobotContainer() {
     super("RobotContainer", State.UNDETERMINED, State.class);
-    SmartDashboard.putString("RobotContainer State", state.toString());
+
+    // Add SMF Children
+    addChildSubsystem(drivetrain);
+    addChildSubsystem(intake);
+
     configureBindings();
     registerStateTransitions();
     registerStateCommands();
@@ -105,13 +108,12 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   @Override
   protected void onTeleopStart() {
-    setState(State.TRAVERSING);
-    state = State.GROUND_EJECT;
+    requestTransition(State.TRAVERSING);
   }
 
   @Override
   protected void update() {
-    state = getState();
+    
   }
 
   public enum State {
