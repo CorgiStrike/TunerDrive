@@ -3,8 +3,6 @@ package frc.robot.Motors.talonfx;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 
-import frc.robot.Motors.tuning.LoggedTunablePIDSV;
-
 public class VelocityTalonFX extends EnhancedTalonFX {
 
   private double target; // In output units
@@ -34,12 +32,12 @@ public class VelocityTalonFX extends EnhancedTalonFX {
    * Constructor for a motion magic configured TalonFX
    *
    * @param deviceNumber CAN ID
-   * @param topGains PIDF gains
+   * @param gains PIDF gains
    * @param inputToOutputRatio number to multiply TalonFX integrated encoder ticks by to get output
    *     units
    */
-  public VelocityTalonFX(int deviceNumber, LoggedTunablePIDSV topGains, double inputToOutputRatio) {
-    this(deviceNumber, "", topGains, inputToOutputRatio);
+  public VelocityTalonFX(int deviceNumber, PIDSVGains gains, double inputToOutputRatio) {
+    this(deviceNumber, "", gains, inputToOutputRatio);
   }
 
   /**

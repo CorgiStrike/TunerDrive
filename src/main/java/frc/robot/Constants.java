@@ -116,6 +116,7 @@ public final class Constants {
     public static final boolean TOP_INVERTED = false;
     public static final boolean BOTTOM_INVERTED = false;
 
+    public static final int BELT_SPEED = 3800;
 
     public static CurrentLimitsConfigs CURRENT_LIMIT = DEFAULT_CURRENT_LIMIT;
     public static final NeutralModeValue NEUTRAL_MODE = NeutralModeValue.Brake;
