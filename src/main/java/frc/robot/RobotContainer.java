@@ -9,6 +9,7 @@ import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
@@ -24,9 +25,11 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
-  private final Intake intake = new Intake(new IntakeIOReal());
+  //private final Intake intake = new Intake(new IntakeIOReal());
 
   private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
+
+  private State state = State.UNDETERMINED;
 
   private void configureBindings() {
     drivetrain.configureBindings(controllerBindings::getDriveXValue, controllerBindings::getDriveYValue, controllerBindings::getDriveTurnValue);
@@ -58,6 +61,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   public RobotContainer() {
     super("RobotContainer", State.UNDETERMINED, State.class);
+    SmartDashboard.putString("RobotContainer State", state.toString());
     configureBindings();
     registerStateTransitions();
     registerStateCommands();
@@ -102,10 +106,12 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   @Override
   protected void onTeleopStart() {
     setState(State.TRAVERSING);
+    state = State.GROUND_EJECT;
   }
 
-  public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+  @Override
+  protected void update() {
+    state = getState();
   }
 
   public enum State {

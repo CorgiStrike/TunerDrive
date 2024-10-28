@@ -10,6 +10,8 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+import frc.robot.SMF.SubsystemManagerFactory;
+
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
@@ -20,8 +22,10 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotInit() {
     m_robotContainer = new RobotContainer();
-
     Logger.start();
+
+    SubsystemManagerFactory.getInstance().registerSubsystem(m_robotContainer, false);
+    SubsystemManagerFactory.getInstance().disableAllSubsystems();
   }
 
   @Override
@@ -30,7 +34,9 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    SubsystemManagerFactory.getInstance().disableAllSubsystems();
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -40,11 +46,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
+    SubsystemManagerFactory.getInstance().notifyAutonomousStart();
   }
 
   @Override
@@ -55,9 +57,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
+    SubsystemManagerFactory.getInstance().notifyTeleopStart();
   }
 
   @Override
@@ -69,6 +69,8 @@ public class Robot extends LoggedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
+
+    SubsystemManagerFactory.getInstance().notifyTestStart();
   }
 
   @Override
