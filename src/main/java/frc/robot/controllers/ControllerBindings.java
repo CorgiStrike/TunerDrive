@@ -16,6 +16,8 @@ public interface ControllerBindings {
 
   Trigger manualIntake();
 
+  Trigger intakeEject();
+
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }

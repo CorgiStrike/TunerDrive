@@ -7,14 +7,17 @@ import frc.robot.Constants.Intake.Hardware;
 
 public class Intake extends StateMachine<Intake.State> {
 
-    private final IntakeIO io = new IntakeIOReal();
+    private final IntakeIO io;
 
     private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
-    public Intake() {
+    public Intake(IntakeIO io) {
         super("Intake", State.UNDETERMINED, State.class);
-        registerStateTransitions();
+
+        this.io = io;
+
         registerStateCommands();
+        registerStateTransitions();
     }
 
     private void registerStateTransitions() {
@@ -26,17 +29,25 @@ public class Intake extends StateMachine<Intake.State> {
     private void registerStateCommands() {
         registerStateCommand(State.IDLE, new SequentialCommandGroup(new InstantCommand(io::stop), watchProxCommand()));
 
-        registerStateCommand(State.INTAKE, 
-        new SequentialCommandGroup(
-            new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.BELT_SPEED)),
-            new ParallelCommandGroup(
-                new SequentialCommandGroup(
-                    
-                ),
-
-
+        registerStateCommand(
+            State.INTAKE, 
+            new SequentialCommandGroup(
+                new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.BELT_SPEED)),
+                new ParallelCommandGroup(
+                    new SequentialCommandGroup(
+                        new WaitCommand(1),
+                        new WaitUntilCommand(() -> inputs.velocity < 0.15 * inputs.targetVelocity),
+                        new InstantCommand(() -> io.setBeltTargetVelocity(0)),
+                        new WaitCommand(0.5),
+                         new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.BELT_SPEED)))
+                    .repeatedly(),
                 watchProxCommand())
-        ));        
+            ));        
+
+        registerStateCommand(
+            State.EJECT,
+            new SequentialCommandGroup(
+                new InstantCommand(() -> io.setBeltTargetVelocity(-Hardware.BELT_SPEED)), watchProxCommand()));
     }
 
     private Command watchProxCommand(){

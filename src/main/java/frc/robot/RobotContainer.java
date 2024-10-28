@@ -11,18 +11,20 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake.Intake;
+import frc.robot.subsystems.Intake.IntakeIOReal;
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
-  private final Intake intake = new Intake();
+  private final Intake intake = new Intake(new IntakeIOReal());
 
   private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
 
@@ -31,6 +33,22 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
     // reset the field-centric heading on left bumper press
     controllerBindings.resetGyro().onTrue(drivetrain.runOnce(() -> drivetrain.swerveDrive.seedFieldRelative()));
+
+    controllerBindings.manualIntake()
+    .onTrue(transitionCommand(State.GROUND_INTAKE, false))
+    .onFalse(
+            new ConditionalCommand(
+                transitionCommand(State.TRAVERSING, false),
+                Commands.none(),
+                () -> getState() == State.GROUND_INTAKE));
+
+    controllerBindings.intakeEject()
+    .onTrue(transitionCommand(State.GROUND_EJECT, false))
+    .onFalse(
+      new ConditionalCommand(
+          transitionCommand(State.TRAVERSING, false),
+          Commands.none(),
+          () -> getState() == State.GROUND_EJECT));
 
     if (Utils.isSimulation()) {
       drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
@@ -58,6 +76,21 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
       intake.transitionCommand(Intake.State.IDLE)
     ));
+
+    registerStateCommand(State.GROUND_INTAKE, 
+    new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.INTAKE)));
+
+    registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.EJECT)
+    ));
+    
+    registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.IDLE)
+    ));
   }
 
   @Override
@@ -74,6 +107,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     SOFT_E_STOP,
     TRAVERSING,
     AUTO_GROUND_INTAKE,
-    GROUND_INTAKE
+    GROUND_INTAKE,
+    GROUND_EJECT
   }
 }
