@@ -17,9 +17,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.util.Units;
 
-import frc.robot.Motors.tuning.LoggedTunablePIDSV;
-import frc.robot.Motors.talonfx.PIDSVGains;
-
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -116,7 +113,7 @@ public final class Constants {
     public static final boolean TOP_INVERTED = false;
     public static final boolean BOTTOM_INVERTED = false;
 
-    public static final int BELT_SPEED = 3800;
+    public static final double BELT_SPEED = 3000 / 60.0; // rps
 
     public static CurrentLimitsConfigs CURRENT_LIMIT = DEFAULT_CURRENT_LIMIT;
     public static final NeutralModeValue NEUTRAL_MODE = NeutralModeValue.Brake;

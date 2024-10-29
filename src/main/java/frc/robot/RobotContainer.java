@@ -16,10 +16,14 @@ import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake.Intake;
+import frc.robot.subsystems.Intake.IntakeIOReal;
 
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
+
+  private final Intake intake;
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
 
@@ -56,8 +60,11 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   public RobotContainer() {
     super("RobotContainer", State.UNDETERMINED, State.class);
 
+    intake = new Intake(new IntakeIOReal());
+
     // Add SMF Children
     addChildSubsystem(drivetrain);
+    addChildSubsystem(intake);
 
     configureBindings();
     registerStateTransitions();
@@ -74,20 +81,24 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   private void registerStateCommands() {
    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
+      intake.transitionCommand(Intake.State.IDLE)
     ));
 
     registerStateCommand(State.GROUND_INTAKE, 
     new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.INTAKING)
       ));
 
     registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.EJECTING)
     ));
     
     registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.IDLE)
     ));
   }
 
