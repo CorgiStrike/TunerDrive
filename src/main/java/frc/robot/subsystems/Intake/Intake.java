@@ -13,6 +13,7 @@ public class Intake extends StateMachine<Intake.State> {
 
     private final IntakeIOInputs inputs = new IntakeIOInputs();
 
+    //ran when initializing the intake
     public Intake (IntakeIO io){
         super("Intake", State.UNDETERMINED, State.class);
         this.io = io;
@@ -25,7 +26,7 @@ public class Intake extends StateMachine<Intake.State> {
         registerTransitions();
     }
 
-
+    //define what the intake does in each state
     public void registerStateCommands() {
         registerStateCommand(State.IDLE, new InstantCommand(io::stop));
         registerStateCommand(State.EJECTING, new InstantCommand(() -> io.setBeltTargetVelocity(-Hardware.BELT_SPEED)));
@@ -39,27 +40,32 @@ public class Intake extends StateMachine<Intake.State> {
         );
     }
 
+    //define the transitions for the intake
     public void registerTransitions() {
         addOmniTransition(State.IDLE);
         addOmniTransition(State.INTAKING);
         addOmniTransition(State.EJECTING);
     }
 
-    public boolean ringPresen() {
+    //check if the ring is present using the prox sensor
+    public boolean ringPresent() {
         return inputs.proxTripped;
     }
 
+    //override the super to always know the state of the intake
     @Override
     protected void determineSelf() {
         io.resetFollower();
         setState(State.IDLE);
     }
 
+    //override the super to constantly update the inputs
     @Override
     protected void update() {
         io.updateInputs(inputs);
     }
 
+    //define the states for the intake
     public enum State {
         UNDETERMINED,
         IDLE,

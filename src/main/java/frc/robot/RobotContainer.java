@@ -23,6 +23,7 @@ import frc.robot.subsystems.Intake.IntakeIOReal;
 public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
+  //initialize subsystems
   private final Intake intake;
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
@@ -35,6 +36,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     // reset the field-centric heading on left bumper press
     controllerBindings.resetGyro().onTrue(drivetrain.runOnce(() -> drivetrain.swerveDrive.seedFieldRelative()));
 
+    //ground intake on A button
     controllerBindings.manualIntake()
     .onTrue(transitionCommand(State.GROUND_INTAKE, false))
     .onFalse(
@@ -43,6 +45,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
                 Commands.none(),
                 () -> getState() == State.GROUND_INTAKE));
 
+    //ground eject on B button
     controllerBindings.intakeEject()
     .onTrue(transitionCommand(State.GROUND_EJECT, false))
     .onFalse(
@@ -59,7 +62,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   public RobotContainer() {
     super("RobotContainer", State.UNDETERMINED, State.class);
-
+    
+    //define subsystems
     intake = new Intake(new IntakeIOReal());
 
     // Add SMF Children

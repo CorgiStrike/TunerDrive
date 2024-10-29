@@ -8,11 +8,13 @@ import frc.robot.Motors.talonfx.VelocityTalonFX;
 import frc.robot.Sensor.ProxSensor;
 
 public class IntakeIOReal implements IntakeIO {
+    //define motors
     protected final VelocityTalonFX topMotor = 
         new VelocityTalonFX(Hardware.TOP_ID,Hardware.TOP_GAINS, Hardware.topRatio);
     protected final VelocityTalonFX bottomMotor = 
         new VelocityTalonFX(Hardware.BOTTOM_ID,Hardware.TOP_GAINS, Hardware.bottomRatio);
 
+    //define prox
     ProxSensor prox = new ProxSensor(Hardware.PROX_ID);
 
     public IntakeIOReal(){
