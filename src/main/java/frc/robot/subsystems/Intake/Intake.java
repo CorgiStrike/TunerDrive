@@ -45,9 +45,19 @@ public class Intake extends StateMachine<Intake.State> {
         addOmniTransition(State.EJECTING);
     }
 
+    public boolean ringPresen() {
+        return inputs.proxTripped;
+    }
+
     @Override
     protected void determineSelf() {
+        io.resetFollower();
         setState(State.IDLE);
+    }
+
+    @Override
+    protected void update() {
+        io.updateInputs(inputs);
     }
 
     public enum State {
