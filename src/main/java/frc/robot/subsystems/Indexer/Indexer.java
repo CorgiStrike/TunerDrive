@@ -64,6 +64,9 @@ public class Indexer extends StateMachine<Indexer.State>{
         addTransition(State.IDLE, State.HUMAN_PLAYER_INTAKE);
         addTransition(State.INDEXING, State.HAS_NOTE);
         addTransition(State.HAS_NOTE, State.FEED_TO_SHOOTER);
+
+        removeTransition(State.HAS_NOTE, State.INDEXING);
+        removeTransition(State.RING_BACK, State.INDEXING);
     }
 
     public boolean hasRingCorrectly (){
