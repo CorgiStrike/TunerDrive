@@ -45,6 +45,14 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
                 Commands.none(),
                 () -> getState() == State.GROUND_INTAKE));
 
+    controllerBindings.autoIntake()
+    .onTrue(transitionCommand(State.AUTO_GROUND_INTAKE, false))
+    .onFalse(
+            new ConditionalCommand(
+                transitionCommand(State.TRAVERSING, false),
+                Commands.none(),
+                () -> getState() == State.AUTO_GROUND_INTAKE));
+
     //ground eject on B button
     controllerBindings.intakeEject()
     .onTrue(transitionCommand(State.GROUND_EJECT, false))
@@ -78,6 +86,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private void registerStateTransitions() {
     addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_INTAKE);
+    addTransition(State.TRAVERSING, State.GROUND_EJECT);
+    addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
 
     addOmniTransition(State.SOFT_E_STOP);
     addOmniTransition(State.TRAVERSING);
@@ -92,6 +102,12 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     registerStateCommand(State.GROUND_INTAKE, 
     new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+      intake.transitionCommand(Intake.State.INTAKING)
+      ));
+    
+    registerStateCommand(State.AUTO_GROUND_INTAKE, 
+    new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.AUTO_INTAKE),
       intake.transitionCommand(Intake.State.INTAKING)
       ));
 

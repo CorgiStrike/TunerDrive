@@ -10,6 +10,7 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.SMF.StateMachine;
+import frc.robot.Vision.Limelight;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements
@@ -17,6 +18,7 @@ import frc.robot.SMF.StateMachine;
  */
 public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrain.State>{
     public final SwerveDrive swerveDrive;
+    private final Limelight limelight = new Limelight("limelight");
     private double maxSpeed = 0.0, maxAngularRate = 0.0;
     private Supplier<Double> xSupplier = null, ySupplier = null, turnSupplier = null;
 
@@ -41,11 +43,21 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         return run(swerveDrive.getRequestRunnable(requestSupplier));
     }
 
-    private void drive(double maxSpeed, double maxAngularRate, Double xValue, Double yValue, Double turnValue) {
-        final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // field-centric driving in open loop
-        applyRequest(()->drive.withVelocityX(xValue * maxSpeed).withVelocityY(yValue * maxSpeed).withRotationalRate(turnValue * maxAngularRate)).schedule();
+    private void drive(double maxSpeed, double maxAngularRate, Double xValue, Double yValue, Double turnValue, Boolean fieldOriented) {
+        if (fieldOriented) {
+            final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+                .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
+                .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // field-centric driving in open loop
+            applyRequest(()->drive.withVelocityX(xValue * maxSpeed).withVelocityY(yValue * maxSpeed).withRotationalRate(turnValue * maxAngularRate)).schedule();
+        }
+
+        else {
+            final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric()
+                .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
+                .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // field-centric driving in open loop
+            applyRequest(()->drive.withVelocityX(xValue * maxSpeed).withVelocityY(yValue * maxSpeed).withRotationalRate(turnValue * maxAngularRate)).schedule();
+        }
+        
     }
 
     public void configureBindings(Supplier<Double> xSupplier, Supplier<Double> ySupplier, Supplier<Double> turnSupplier) {
@@ -76,7 +88,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         registerStateCommand(State.IDLE, new RunCommand(() -> swerveDrive.periodic()));
         registerStateCommand(State.TRAVERSING, new RunCommand(() -> {
             swerveDrive.periodic();
-            drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnSupplier.get());
+            drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnSupplier.get(), true);
         }));
         registerStateCommand(State.AUTO_INTAKE, new RunCommand(() -> {
             autoIntakeDrive();
@@ -85,7 +97,20 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
     }
 
     private void autoIntakeDrive() {
+        var tx = limelight.getTX();
+        var ta = limelight.getTA();
+
+        Double drive = 0.0;
+        Double turn = 0.0;
+
+        if (Math.abs(tx)<8||ta<5) {
+            drive = -0.4;
+        }
+        if(ta < 5) turn = -tx/100;
+        else turn = -tx/80;
         
+
+        drive(maxSpeed, maxAngularRate, drive, 0.0, turn, false);
     }
 
     public enum State {
