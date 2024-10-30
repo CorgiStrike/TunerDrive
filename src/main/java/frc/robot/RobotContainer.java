@@ -18,6 +18,8 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake.Intake;
 import frc.robot.subsystems.Intake.IntakeIOReal;
+import frc.robot.subsystems.Indexer.Indexer;
+import frc.robot.subsystems.Indexer.IndexerIOReal;
 
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
@@ -25,6 +27,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   //initialize subsystems
   private final Intake intake;
+  private final Indexer indexer;
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
 
@@ -73,10 +76,12 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     
     //define subsystems
     intake = new Intake(new IntakeIOReal());
+    indexer = new Indexer(new IndexerIOReal());
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
     addChildSubsystem(intake);
+    addChildSubsystem(indexer);
 
     configureBindings();
     registerStateTransitions();
@@ -96,29 +101,34 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private void registerStateCommands() {
    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
-      intake.transitionCommand(Intake.State.IDLE)
+      intake.transitionCommand(Intake.State.IDLE),
+      indexer.transitionCommand(Indexer.State.IDLE)
     ));
 
     registerStateCommand(State.GROUND_INTAKE, 
     new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.INTAKING)
+      intake.transitionCommand(Intake.State.INTAKING),
+      indexer.transitionCommand(Indexer.State.INDEXING)
       ));
     
     registerStateCommand(State.AUTO_GROUND_INTAKE, 
     new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.AUTO_INTAKE),
-      intake.transitionCommand(Intake.State.INTAKING)
+      intake.transitionCommand(Intake.State.INTAKING),
+      indexer.transitionCommand(Indexer.State.INDEXING)
       ));
 
     registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.EJECTING)
+      intake.transitionCommand(Intake.State.EJECTING),
+      indexer.transitionCommand(Indexer.State.IDLE)
     ));
     
     registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.IDLE)
+      intake.transitionCommand(Intake.State.IDLE),
+      indexer.transitionCommand(Indexer.State.IDLE)
     ));
   }
 

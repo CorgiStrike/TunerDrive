@@ -116,11 +116,41 @@ public final class Constants {
     public static final double BELT_SPEED = 3000 / 60.0; // rps
 
     public static CurrentLimitsConfigs CURRENT_LIMIT = DEFAULT_CURRENT_LIMIT;
-    public static final NeutralModeValue NEUTRAL_MODE = NeutralModeValue.Brake;
+    public static final NeutralModeValue NEUTRAL_MODE = NeutralModeValue.Coast;
 
 
     public static final PIDSVGains TOP_GAINS =
           new PIDSVGains(0.5, 0, 0, 0.2469, 0.1237);
     }
+  }
+
+  public static final class Indexer {
+
+    public static final class Hardware {
+
+      public static final int indexerID = 50;
+
+      public static final double indexerRatio = 1;
+
+      public static final boolean indexerInverted = false;
+
+      public static final double indexingSpeed = 1000 / 60.0; // rps
+      public static final double passThroughSpeed = 2000 / 60.0; // rps
+      public static final double feedSpeed = 50.0;
+      public static final double humanPlayerIntakeSpeed = 1000 / 60.0; // rps
+      public static final double ringBackSpeed = -500 / 60.0; // rps
+
+      public static final int prox1ID = 1;
+      public static final int prox2ID = 3;
+      public static final int prox3ID = 2;
+
+      public static final CurrentLimitsConfigs currentLimit = DEFAULT_CURRENT_LIMIT;
+
+      public static final NeutralModeValue neutralMode = NeutralModeValue.Coast;
+
+      public static final PIDSVGains indexerGains =
+              new PIDSVGains(0.25, 0, 0, 0.1454, 0.1204);
+    }
+
   }
 }
