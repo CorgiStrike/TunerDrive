@@ -55,7 +55,9 @@ public class Indexer extends StateMachine<Indexer.State>{
         ));
 
         registerStateCommand(State.STUCK_NOTE, new SequentialCommandGroup(
-            new InstantCommand(io::stop) // configure robotContainer to change LEDs
+            new InstantCommand(io::stop), // configure robotContainer to change LEDs
+            new WaitUntilCommand(() -> !notePresent()),
+            transitionCommand(State.IDLE)
         ));
 
         registerStateCommand(State.LOST_NOTE, new SequentialCommandGroup(
@@ -116,6 +118,7 @@ public class Indexer extends StateMachine<Indexer.State>{
         addOmniTransition(State.STUCK_NOTE);
         addOmniTransition(State.LOST_NOTE);
 
+        addTransition(State.INDEXING, State.HAS_NOTE);
         addTransition(State.HAS_NOTE, State.FEED_TO_SHOOTER);
         addTransition(State.IDLE, State.AWAITING_NOTE_BACK);
         addTransition(State.IDLE, State.AWAITING_NOTE_FRONT);
