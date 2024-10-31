@@ -84,9 +84,10 @@ public class Indexer extends StateMachine<Indexer.State>{
         addOmniTransition(State.PASS_THROUGH);
 
         addTransition(State.HUMAN_PLAYER_INTAKE, State.RING_BACK);
+        addTransition(State.INDEXING, State.RING_BACK);
         addTransition(State.RING_BACK, State.HAS_NOTE);
-        addTransition(State.IDLE, State.HUMAN_PLAYER_INTAKE);
         addTransition(State.INDEXING, State.HAS_NOTE);
+        addTransition(State.IDLE, State.HUMAN_PLAYER_INTAKE);
         addTransition(State.HAS_NOTE, State.FEED_TO_SHOOTER);
 
         removeTransition(State.HAS_NOTE, State.INDEXING);
