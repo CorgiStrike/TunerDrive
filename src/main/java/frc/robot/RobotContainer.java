@@ -102,7 +102,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
       intake.transitionCommand(Intake.State.IDLE),
-      indexer.transitionCommand(Indexer.State.IDLE)
+      indexer.transitionCommand(Indexer.State.SOFT_E_STOP)
     ));
 
     registerStateCommand(State.GROUND_INTAKE, 

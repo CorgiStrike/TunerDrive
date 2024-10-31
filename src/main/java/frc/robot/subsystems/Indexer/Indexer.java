@@ -26,35 +26,59 @@ public class Indexer extends StateMachine<Indexer.State>{
 
 
     public void registerStateCommands() {
-        registerStateCommand(State.IDLE, new InstantCommand(io::stop));
+        registerStateCommand(State.IDLE, new ConditionalCommand(transitionCommand(State.INDEXING), new InstantCommand(io::stop), () -> ringPresent()));
+
         registerStateCommand(State.INDEXING, 
-            new SequentialCommandGroup(
-                new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.indexingSpeed)),
-                new WaitUntilCommand(() -> hasRingCorrectly() || inputs.prox3Tripped),
-                new ConditionalCommand(transitionCommand(State.HAS_NOTE), transitionCommand(State.RING_BACK), () -> hasRingCorrectly())
-                )
+            new ConditionalCommand(
+                transitionCommand(State.HAS_NOTE), 
+                new ConditionalCommand(
+                    transitionCommand(State.RING_BACK),
+                    new SequentialCommandGroup(
+                        new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.indexingSpeed)),
+                        new WaitUntilCommand(() -> hasnoteCorrectly() || tooFar()),
+                        new ConditionalCommand(transitionCommand(State.HAS_NOTE), transitionCommand(State.RING_BACK), () -> hasnoteCorrectly())
+                    ), 
+                    () -> tooFar()
+            ), 
+            () -> hasnoteCorrectly())
         );
-        registerStateCommand(State.PASS_THROUGH, new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.passThroughSpeed)));
+
+        registerStateCommand(State.PASS_THROUGH, new SequentialCommandGroup(
+            new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.passThroughSpeed)),
+            new WaitUntilCommand(() -> !ringPresent()),
+            new InstantCommand(io::stop),
+            transitionCommand(State.IDLE)
+        ));
+
         registerStateCommand(State.HAS_NOTE, new InstantCommand(io::stop));
-        registerStateCommand(State.FEED_TO_SHOOTER, new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.feedSpeed)));
+
+        registerStateCommand(State.FEED_TO_SHOOTER, new SequentialCommandGroup(
+            new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.feedSpeed)),
+            new WaitUntilCommand(() -> !ringPresent()),
+            new InstantCommand(io::stop),
+            transitionCommand(State.IDLE)
+        ));
+
         registerStateCommand(State.HUMAN_PLAYER_INTAKE, 
             new SequentialCommandGroup(
                 new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.humanPlayerIntakeSpeed)),
-                new WaitUntilCommand(() -> allProxActive()),
-                transitionCommand(State.RING_BACK)
+                new WaitUntilCommand(() -> allProxActive() || hasnoteCorrectly()),
+                new ConditionalCommand(transitionCommand(State.HAS_NOTE), transitionCommand(State.RING_BACK), () -> hasnoteCorrectly())
         ));
+
         registerStateCommand(State.RING_BACK, 
             new SequentialCommandGroup(
                 new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.ringBackSpeed)),
-                new WaitUntilCommand(() -> hasRingCorrectly()),
+                new WaitUntilCommand(() -> hasnoteCorrectly()),
                 new InstantCommand(io::stop),
                 transitionCommand(State.HAS_NOTE)
-            )
+            ));
 
-        );
+        registerStateCommand(State.SOFT_E_STOP, new InstantCommand(io::stop));
     }
 
     public void registerTransitions() {
+        addOmniTransition(State.SOFT_E_STOP);
         addOmniTransition(State.IDLE);
         addOmniTransition(State.INDEXING);
         addOmniTransition(State.PASS_THROUGH);
@@ -69,12 +93,20 @@ public class Indexer extends StateMachine<Indexer.State>{
         removeTransition(State.RING_BACK, State.INDEXING);
     }
 
-    public boolean hasRingCorrectly (){
+    public boolean ringPresent() {
+        return inputs.prox1Tripped || inputs.prox2Tripped || inputs.prox3Tripped;
+    }
+
+    public boolean hasnoteCorrectly (){
         return inputs.prox1Tripped && inputs.prox2Tripped && !inputs.prox3Tripped;
     }
 
     public boolean allProxActive () {
        return inputs.prox1Tripped && inputs.prox2Tripped && inputs.prox3Tripped;
+    }
+
+    public boolean tooFar (){
+        return inputs.prox3Tripped;
     }
 
     @Override
@@ -95,6 +127,7 @@ public class Indexer extends StateMachine<Indexer.State>{
         PASS_THROUGH,
         FEED_TO_SHOOTER,
         HUMAN_PLAYER_INTAKE,
-        RING_BACK
+        RING_BACK,
+        SOFT_E_STOP
     }
 }
