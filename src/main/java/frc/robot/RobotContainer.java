@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
@@ -105,25 +106,43 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       indexer.transitionCommand(Indexer.State.SOFT_E_STOP)
     ));
 
-    registerStateCommand(State.GROUND_INTAKE, 
-    new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.INTAKING),
-      indexer.transitionCommand(Indexer.State.INDEXING)
-      ));
+    registerStateCommand(State.GROUND_INTAKE, new SequentialCommandGroup(
+      new ParallelCommandGroup(
+        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+        intake.transitionCommand(Intake.State.INTAKING),
+        indexer.transitionCommand(Indexer.State.INDEXING)
+      ),
+      indexer.waitForState(Indexer.State.HAS_NOTE),
+      new ConditionalCommand(
+        transitionCommand(State.TRAVERSING),
+        Commands.none(),
+        () -> getState() == State.GROUND_INTAKE)
+    ));
     
-    registerStateCommand(State.AUTO_GROUND_INTAKE, 
-    new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.AUTO_INTAKE),
-      intake.transitionCommand(Intake.State.INTAKING),
-      indexer.transitionCommand(Indexer.State.INDEXING)
+    registerStateCommand(State.AUTO_GROUND_INTAKE, new SequentialCommandGroup(
+      new ParallelCommandGroup(
+        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.AUTO_INTAKE),
+        intake.transitionCommand(Intake.State.INTAKING),
+        indexer.transitionCommand(Indexer.State.INDEXING)),
+      indexer.waitForState(Indexer.State.HAS_NOTE),
+      new ConditionalCommand(
+        transitionCommand(State.TRAVERSING),
+        Commands.none(),
+        () -> getState() == State.AUTO_GROUND_INTAKE)
       ));
 
-    registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.EJECTING),
-      indexer.transitionCommand(Indexer.State.IDLE)
-    ));
+    registerStateCommand(State.GROUND_EJECT, new SequentialCommandGroup(
+      new ParallelCommandGroup(
+        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+        intake.transitionCommand(Intake.State.EJECTING),
+        indexer.transitionCommand(Indexer.State.IDLE)
+      ),
+      intake.waitForState(Intake.State.IDLE),
+      new ConditionalCommand(
+        transitionCommand(State.TRAVERSING),
+        Commands.none(),
+        () -> getState() == State.GROUND_EJECT)
+      ));
     
     registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
