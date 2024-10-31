@@ -3,11 +3,11 @@ package frc.robot.subsystems.Indexer;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 
-import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 import frc.robot.Constants.Indexer.Hardware;
 import frc.robot.SMF.StateMachine;
@@ -34,28 +34,77 @@ public class Indexer extends StateMachine<Indexer.State>{
     public void registerStateCommands() {
         registerStateCommand(State.SOFT_E_STOP, new InstantCommand(io::stop));
 
-        registerStateCommand(State.IDLE, new InstantCommand(io::stop)); //maybe add a conditional here if decided its needed to check if theres a note
+        registerStateCommand(State.IDLE, 
+            new ConditionalCommand( //transitions the indexer to INDEXING if a note is detected
+                transitionCommand(State.INDEXING), 
+                new InstantCommand(io::stop), 
+                () -> notePresent()
+            )
+        ); 
                                                                         
         registerStateCommand(State.INDEXING, new SequentialCommandGroup(
             indexCommand()
                 .withTimeout(Hardware.indexerTimeout) //stop it in case the indexer is having a hard time
                 .andThen(new ConditionalCommand(
-                    transitionCommand(State.HAS_NOTE), //transition to has note if we have the note correctly
+                    transitionCommand(State.HAS_NOTE), //transition to HAS_NOTE if we have the note correctly
                     new ConditionalCommand(
                         transitionCommand(State.STUCK_NOTE), //transition to stuck note if we have a note, but can't index it
                         transitionCommand(State.LOST_NOTE), //transition to lost note if we don't have the note
-                        () -> ringPresent()), 
+                        () -> notePresent()), 
                     () -> hasNoteCorrectly()))
         ));
 
         registerStateCommand(State.STUCK_NOTE, new SequentialCommandGroup(
-            new InstantCommand((() -> io.setBeltTargetVelocity(Hardware.passThroughSpeed)))
+            new InstantCommand(io::stop) // configure robotContainer to change LEDs
         ));
 
-        registerStateCommand(State.AWAITING_RING_BACK, new SequentialCommandGroup(
+        registerStateCommand(State.LOST_NOTE, new SequentialCommandGroup(
+            new InstantCommand(io::stop) // configure robotContainer to change LEDs/try intaking maybe?
+        ));
+
+        registerStateCommand(State.AWAITING_NOTE_BACK, new SequentialCommandGroup(
             new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.indexingSpeed)),
-            new WaitUntilCommand(() -> ringPresent()),
+            new WaitUntilCommand(() -> notePresent()),
             transitionCommand(State.INDEXING)
+        ));
+
+        registerStateCommand(State.AWAITING_NOTE_FRONT, new SequentialCommandGroup(
+            new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.humanPlayerIntakeSpeed)),
+            new WaitUntilCommand(() -> notePresent()),
+            transitionCommand(State.INDEXING)
+        ));
+
+        registerStateCommand(State.PASS_THROUGH, 
+            new SequentialCommandGroup(
+                new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.passThroughSpeed)),
+                new WaitUntilCommand(() -> !notePresent()).withTimeout(Hardware.ejectTimeout),
+                new ConditionalCommand(
+                    transitionCommand(State.IDLE),
+                    transitionCommand(State.STUCK_NOTE),
+                    () -> !notePresent()
+                )
+            )
+        );
+        
+        registerStateCommand(State.FEED_TO_SHOOTER,
+            new SequentialCommandGroup(
+                new InstantCommand (() -> io.setBeltTargetVelocity(Hardware.feedSpeed)),
+                new WaitUntilCommand(() -> !notePresent()).withTimeout(Hardware.shootTimeout),
+                new ConditionalCommand(
+                    transitionCommand(State.STUCK_NOTE), 
+                    transitionCommand(State.IDLE),
+                    () -> notePresent())
+            )
+        );
+
+        registerStateCommand(State.HAS_NOTE, new SequentialCommandGroup(
+            new InstantCommand(io::stop),
+            new RunCommand(
+                () -> {
+                    if (!notePresent()) requestTransition(State.IDLE);
+                    if (!hasNoteCorrectly()) requestTransition(State.INDEXING);
+                }
+            )
         ));
     }
 
@@ -64,11 +113,15 @@ public class Indexer extends StateMachine<Indexer.State>{
         addOmniTransition(State.IDLE);
         addOmniTransition(State.INDEXING);
         addOmniTransition(State.PASS_THROUGH);
+        addOmniTransition(State.STUCK_NOTE);
+        addOmniTransition(State.LOST_NOTE);
 
         addTransition(State.HAS_NOTE, State.FEED_TO_SHOOTER);
+        addTransition(State.IDLE, State.AWAITING_NOTE_BACK);
+        addTransition(State.IDLE, State.AWAITING_NOTE_FRONT);
     }
 
-    public boolean ringPresent() {
+    public boolean notePresent() {
         return inputs.prox1Tripped || inputs.prox2Tripped || inputs.prox3Tripped;
     }
 
@@ -77,7 +130,7 @@ public class Indexer extends StateMachine<Indexer.State>{
     }
 
     public boolean allProxActive () {
-       return inputs.prox1Tripped && inputs.prox2Tripped && inputs.prox3Tripped;
+        return inputs.prox1Tripped && inputs.prox2Tripped && inputs.prox3Tripped;
     }
 
     public boolean tooFar (){
@@ -96,8 +149,8 @@ public class Indexer extends StateMachine<Indexer.State>{
 
                 if (!isFinished.get()) {
                     
-                    //no proxes active, we lost the ring
-                    if (!ringPresent()) isFinished.set(true);
+                    //no proxes active, we lost the NOTE
+                    if (!notePresent()) isFinished.set(true);
 
                     //check if prox2 or prox3 are tripped, if they are, the note is too far (you check prox2 because if it didnt trip
                     //hasNoteCorrectly(), then it could be in a spot where it only triggers prox1, not prox2 or prox3)
@@ -111,6 +164,7 @@ public class Indexer extends StateMachine<Indexer.State>{
             isFinished::get
             );
     }
+    
     @Override
     protected void determineSelf() {
         setState(State.IDLE);
@@ -129,8 +183,8 @@ public class Indexer extends StateMachine<Indexer.State>{
         HAS_NOTE,
         PASS_THROUGH,
         FEED_TO_SHOOTER,
-        AWATING_RING_FRONT,
-        AWAITING_RING_BACK,
+        AWAITING_NOTE_FRONT,
+        AWAITING_NOTE_BACK,
         LOST_NOTE,
         STUCK_NOTE
     }

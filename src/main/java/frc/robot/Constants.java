@@ -137,11 +137,11 @@ public final class Constants {
       public static final double indexingSpeed = 1000 / 60.0; // rps
       public static final double passThroughSpeed = 2000 / 60.0; // rps
       public static final double feedSpeed = 50.0;
-      public static final double humanPlayerIntakeSpeed = 1000 / 60.0; // rps
-      public static final double ringBackSpeed = -500 / 60.0; // rps
+      public static final double humanPlayerIntakeSpeed = -1000 / 60.0; // rps
 
       public static final double indexerTimeout = defaultTImeout;
       public static final double ejectTimeout = 5.0;
+      public static final double shootTimeout = 5.0;
 
       public static final int prox1ID = 1;
       public static final int prox2ID = 3;

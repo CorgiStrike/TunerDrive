@@ -110,17 +110,17 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       new ParallelCommandGroup(
         drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
         intake.transitionCommand(Intake.State.INTAKING),
-        indexer.transitionCommand(Indexer.State.INDEXING)
+        indexer.transitionCommand(Indexer.State.AWAITING_NOTE_BACK)
       ),
-      indexer.waitForState(Indexer.State.HAS_NOTE),
+      indexer.waitForState(Indexer.State.INDEXING),
       transitionCommand(State.TRAVERSING)));
     
     registerStateCommand(State.AUTO_GROUND_INTAKE, new SequentialCommandGroup(
       new ParallelCommandGroup(
         drivetrain.transitionCommand(CommandSwerveDrivetrain.State.AUTO_INTAKE),
         intake.transitionCommand(Intake.State.INTAKING),
-        indexer.transitionCommand(Indexer.State.INDEXING)),
-      indexer.waitForState(Indexer.State.HAS_NOTE),
+        indexer.transitionCommand(Indexer.State.AWAITING_NOTE_BACK)),
+      indexer.waitForState(Indexer.State.INDEXING),
       transitionCommand(State.TRAVERSING)));
 
     registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
