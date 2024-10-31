@@ -27,7 +27,7 @@ import edu.wpi.first.math.util.Units;
  */
 public final class Constants {
 
-  public static final boolean ALLOW_TUNING = true;
+  public static final double defaultTImeout = 4.0;
 
   public static final CurrentLimitsConfigs DEFAULT_CURRENT_LIMIT =
       new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withSupplyCurrentLimitEnable(true);
@@ -139,6 +139,9 @@ public final class Constants {
       public static final double feedSpeed = 50.0;
       public static final double humanPlayerIntakeSpeed = 1000 / 60.0; // rps
       public static final double ringBackSpeed = -500 / 60.0; // rps
+
+      public static final double indexerTimeout = defaultTImeout;
+      public static final double ejectTimeout = 5.0;
 
       public static final int prox1ID = 1;
       public static final int prox2ID = 3;
