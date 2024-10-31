@@ -29,14 +29,7 @@ public class Intake extends StateMachine<Intake.State> {
     //define what the intake does in each state
     public void registerStateCommands() {
         registerStateCommand(State.IDLE, new InstantCommand(io::stop));
-
-        registerStateCommand(State.EJECTING, new SequentialCommandGroup(
-            new InstantCommand(() -> io.setBeltTargetVelocity(-Hardware.BELT_SPEED)), 
-            new WaitUntilCommand(() -> !ringPresent()),
-            new InstantCommand(io::stop),
-            transitionCommand(State.IDLE)
-            ));
-        
+        registerStateCommand(State.EJECTING, new InstantCommand(() -> io.setBeltTargetVelocity(-Hardware.BELT_SPEED)));
         registerStateCommand(State.INTAKING, new SequentialCommandGroup(
             new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.BELT_SPEED)),
             new WaitCommand(1),

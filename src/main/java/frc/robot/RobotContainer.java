@@ -131,17 +131,10 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         () -> getState() == State.AUTO_GROUND_INTAKE)
       ));
 
-    registerStateCommand(State.GROUND_EJECT, new SequentialCommandGroup(
-      new ParallelCommandGroup(
+    registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
         drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
         intake.transitionCommand(Intake.State.EJECTING),
         indexer.transitionCommand(Indexer.State.IDLE)
-      ),
-      intake.waitForState(Intake.State.IDLE),
-      new ConditionalCommand(
-        transitionCommand(State.TRAVERSING),
-        Commands.none(),
-        () -> getState() == State.GROUND_EJECT)
       ));
     
     registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
