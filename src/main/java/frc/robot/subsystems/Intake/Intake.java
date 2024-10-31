@@ -18,8 +18,6 @@ public class Intake extends StateMachine<Intake.State> {
         super("Intake", State.UNDETERMINED, State.class);
         this.io = io;
 
-        io.resetFollower();
-
         io.updateInputs(inputs);
 
         registerStateCommands();
