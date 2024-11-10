@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -185,7 +186,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   @Override
   protected void determineSelf() {
-    setState(State.SOFT_E_STOP);
+    setState(State.TRAVERSING);
   }
 
   @Override
@@ -195,7 +196,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   @Override
   protected void update() {
-    
+    new PrintCommand(""+getState()).schedule();
   }
 
   public enum State {

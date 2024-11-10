@@ -3,6 +3,7 @@ package frc.robot.subsystems.Indexer;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -39,7 +40,7 @@ public class Indexer extends StateMachine<Indexer.State>{
                 transitionCommand(State.INDEXING), 
                 new InstantCommand(io::stop), 
                 () -> notePresent()
-            )
+            ).repeatedly()
         ); 
                                                                         
         registerStateCommand(State.INDEXING, new SequentialCommandGroup(
@@ -66,7 +67,7 @@ public class Indexer extends StateMachine<Indexer.State>{
 
         registerStateCommand(State.AWAITING_NOTE_BACK, new SequentialCommandGroup(
             new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.indexingSpeed)),
-            new WaitUntilCommand(() -> notePresent()),
+            new WaitUntilCommand(() -> inputs.prox1Tripped),
             transitionCommand(State.INDEXING)
         ));
 
@@ -176,6 +177,7 @@ public class Indexer extends StateMachine<Indexer.State>{
     @Override
     protected void update(){
         io.updateInputs(inputs);
+        
     }
 
     public enum State{
