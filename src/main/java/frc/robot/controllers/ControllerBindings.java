@@ -18,6 +18,10 @@ public interface ControllerBindings {
 
   Trigger intakeEject();
 
+  Trigger cleanseIndexer();
+
+  Trigger stow();
+
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }
