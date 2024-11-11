@@ -13,12 +13,17 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
+
 import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake.Intake;
 import frc.robot.subsystems.Intake.IntakeIOReal;
+import frc.robot.subsystems.Shooter.Shooter;
+import frc.robot.subsystems.Shooter.Flywheels.FlywheelsIOReal;
 import frc.robot.subsystems.Indexer.Indexer;
 import frc.robot.subsystems.Indexer.IndexerIOReal;
 
@@ -29,6 +34,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   //initialize subsystems
   private final Intake intake;
   private final Indexer indexer;
+  private final Shooter shooter;
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
 
@@ -78,6 +84,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     //define subsystems
     intake = new Intake(new IntakeIOReal());
     indexer = new Indexer(new IndexerIOReal());
+    shooter = new Shooter(new FlywheelsIOReal());
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
@@ -93,14 +100,18 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_EJECT);
-    addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
+    addTransition(State.TRAVERSING, State.BASE_SHOT_SPEAKER);
+    addTransition(State.TRAVERSING, State.LOB_ARC);
+    addTransition(State.TRAVERSING, State.LOB_STRAIGHT);
+    addTransition(State.TRAVERSING, State.SPEAKER_AA);
+    addTransition(State.TRAVERSING, State.LOB_AA);
 
     addOmniTransition(State.SOFT_E_STOP);
     addOmniTransition(State.TRAVERSING);
   }
 
   private void registerStateCommands() {
-   registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
+    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
       intake.transitionCommand(Intake.State.IDLE),
       indexer.transitionCommand(Indexer.State.SOFT_E_STOP)
@@ -129,10 +140,35 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         indexer.transitionCommand(Indexer.State.IDLE)
       ));
     
-    registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.IDLE),
-      indexer.transitionCommand(Indexer.State.IDLE)
+    registerStateCommand(State.TRAVERSING, 
+    new SequentialCommandGroup(
+      new ParallelCommandGroup(
+        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+        intake.transitionCommand(Intake.State.IDLE),
+        indexer.transitionCommand(Indexer.State.IDLE)
+      ),
+      new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE),
+      transitionCommand(State.LOST_NOTE)                                                                                              
+    ));
+
+    registerStateCommand(State.CLEANSE, 
+      new SequentialCommandGroup(
+        new ParallelCommandGroup(
+          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+          intake.transitionCommand(Intake.State.IDLE),
+          indexer.transitionCommand(Indexer.State.PASS_THROUGH)
+        ),
+        new WaitCommand(4),
+        new ConditionalCommand(
+          transitionCommand(State.TRAVERSING), 
+          transitionCommand(State.STUCK_NOTE), 
+          () -> indexer.getState() == Indexer.State.IDLE)
+      )
+    );
+
+    registerStateCommand(State.BASE_SHOT_SPEAKER, new ParallelCommandGroup(
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),     // CHANGE TO X-SHAPE
+      shooter.transitionCommand(Shooter.State.BASE_SHOT_SPEAKER)
     ));
   }
 
@@ -157,6 +193,15 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     TRAVERSING,
     AUTO_GROUND_INTAKE,
     GROUND_INTAKE,
-    GROUND_EJECT
+    GROUND_EJECT,
+    LOST_NOTE,
+    STUCK_NOTE,
+    CLEANSE,
+    BASE_SHOT_SPEAKER,
+    AMP,
+    LOB_STRAIGHT,
+    LOB_ARC,
+    SPEAKER_AA,
+    LOB_AA
   }
 }
