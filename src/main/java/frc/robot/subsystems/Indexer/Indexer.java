@@ -67,7 +67,7 @@ public class Indexer extends StateMachine<Indexer.State>{
 
         registerStateCommand(State.AWAITING_NOTE_BACK, new SequentialCommandGroup(
             new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.indexingSpeed)),
-            new WaitUntilCommand(() -> inputs.prox1Tripped),
+            new WaitUntilCommand(() -> notePresent()),
             transitionCommand(State.INDEXING)
         ));
 
