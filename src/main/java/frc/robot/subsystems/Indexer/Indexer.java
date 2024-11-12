@@ -103,7 +103,7 @@ public class Indexer extends StateMachine<Indexer.State>{
     }
 
     public boolean allProxActive () {
-        return inputs.prox1Tripped && inputs.prox2Tripped && inputs.prox3Tripped;
+       return inputs.prox1Tripped && inputs.prox2Tripped && inputs.prox3Tripped;
     }
 
     public boolean tooFar (){
