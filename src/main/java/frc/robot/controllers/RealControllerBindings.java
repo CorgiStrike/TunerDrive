@@ -56,16 +56,11 @@ public class RealControllerBindings implements ControllerBindings {
 
   @Override
   public Trigger cleanseIndexer() {
-    return gamepad.button(7);
+    return gamepad.x();
   }
 
   @Override
   public Trigger stow(){
     return gamepad.leftBumper();
-  } 
-  
-  @Override
-  public Trigger humanIntake(){
-    return gamepad.x();
-  }
+  }  
 }

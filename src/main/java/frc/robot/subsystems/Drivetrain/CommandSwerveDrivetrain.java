@@ -7,16 +7,10 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import frc.robot.Motors.talonfx.PIDSVGains;
 import frc.robot.SMF.StateMachine;
 import frc.robot.Vision.Limelight;
-import frc.robot.util.PIDGains;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements
@@ -27,8 +21,6 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
     private final Limelight limelight = new Limelight("limelight");
     private double maxSpeed = 0.0, maxAngularRate = 0.0;
     private Supplier<Double> xSupplier = null, ySupplier = null, turnSupplier = null;
-    private final PIDGains holdGains = new PIDGains(5, 0, 0);
-    private PIDController thetaController;
 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, double maxSpeed, double maxAngularRate, SwerveModuleConstants... modules) {
         super("CommandSwerveDrive", State.UNDETERMINED, State.class);
@@ -37,8 +29,6 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         this.maxAngularRate = maxAngularRate;
         registerStateTransitions();
         registerStateCommands();
-        thetaController = new PIDController(holdGains.p, holdGains.i, holdGains.d);
-        thetaController.enableContinuousInput(-Math.PI, Math.PI);
     }
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double maxSpeed, double maxAngularRate, SwerveModuleConstants... modules) {
         super("RobotContainer", State.UNDETERMINED, State.class);
@@ -47,8 +37,6 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         this.maxAngularRate = maxAngularRate;
         registerStateTransitions();
         registerStateCommands();
-        thetaController = new PIDController(holdGains.p, holdGains.i, holdGains.d);
-        thetaController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
@@ -85,7 +73,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
 
     @Override
     protected void update() {
-        
+       
     }
 
     private void registerStateTransitions() {
@@ -97,23 +85,13 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
 
 
     private void registerStateCommands() {
-
         registerStateCommand(State.IDLE, new RunCommand(() -> swerveDrive.periodic()));
-
         registerStateCommand(State.TRAVERSING, new RunCommand(() -> {
             swerveDrive.periodic();
             drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnSupplier.get(), true);
         }));
-
         registerStateCommand(State.AUTO_INTAKE, new RunCommand(() -> {
             autoIntakeDrive();
-            swerveDrive.periodic();
-        }).repeatedly());
-
-        registerStateCommand(State.FACE_SOURCE, new RunCommand(() -> {
-            Double sourceAngle = DriverStation.getAlliance().get()==Alliance.Red ? 0.0 : 180.0;
-            Double turnValue = getRotValue(swerveDrive.getRotation3d().getZ(), sourceAngle);
-            drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnValue, true);
             swerveDrive.periodic();
         }).repeatedly());
     }
@@ -135,17 +113,10 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         drive(maxSpeed, maxAngularRate, drive, 0.0, turn, false);
     }
 
-    private Double getRotValue(Double currentAngle, Double targetAngle) {
-        thetaController.setSetpoint(new Rotation2d(targetAngle).getRadians());
-        return thetaController.calculate(new Rotation2d(currentAngle).getRadians());
-    }
-
     public enum State {
         UNDETERMINED,
         IDLE,
         TRAVERSING,
-        AUTO_INTAKE,
-        FACE_AMP,
-        FACE_SOURCE
+        AUTO_INTAKE
     }
 }

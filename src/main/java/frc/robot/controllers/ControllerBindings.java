@@ -22,8 +22,6 @@ public interface ControllerBindings {
 
   Trigger stow();
 
-  Trigger humanIntake();
-
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }

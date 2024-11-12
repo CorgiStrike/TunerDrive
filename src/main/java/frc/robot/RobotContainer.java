@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import static frc.robot.Constants.defaultTimeout;
-
 import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -23,7 +21,6 @@ import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake.Intake;
 import frc.robot.subsystems.Intake.IntakeIOReal;
 import frc.robot.subsystems.Shooter.Shooter;
-import frc.robot.subsystems.Shooter.Arm.ArmIOReal;
 import frc.robot.subsystems.Shooter.Flywheels.FlywheelsIOReal;
 import frc.robot.subsystems.Indexer.Indexer;
 import frc.robot.subsystems.Indexer.IndexerIOReal;
@@ -68,10 +65,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     controllerBindings.stow()
     .onTrue(transitionCommand(State.TRAVERSING));
 
-    controllerBindings.humanIntake()
-    .onTrue(transitionCommand(State.HUMAN_INTAKE, false))
-    .onFalse(transitionCommand(State.TRAVERSING));
-
     if (Utils.isSimulation()) {
       drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -84,23 +77,21 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     //define subsystems
     intake = new Intake(new IntakeIOReal());
     indexer = new Indexer(new IndexerIOReal());
-    shooter = new Shooter(new FlywheelsIOReal(), new ArmIOReal());
+    shooter = new Shooter(new FlywheelsIOReal());
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
     addChildSubsystem(intake);
     addChildSubsystem(indexer);
 
-    // button mappings
     configureBindings();
-
-    // register commands/transitions
     registerStateTransitions();
     registerStateCommands();
   }
 
   private void registerStateTransitions() {
-    //one-way transitions | intake not omnis to aviod picking up too many notes (implementing logic soon)
+    //talk to Jonah about changing these to omnis? - maybe disallow the transition from auto ground intake to ground intake - Jonah, if I
+    //forget to talk abt this w/ you, please remind me
     addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_EJECT);
@@ -155,7 +146,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         indexer.transitionCommand(Indexer.State.IDLE)
       ),
       new WaitUntilCommand(() -> indexer.getState() == Indexer.State.LOST_NOTE),
-      transitionCommand(State.LOST_NOTE)
+      transitionCommand(State.LOST_NOTE)                                                                                              
     ));
 
     registerStateCommand(State.CLEANSE, 
@@ -163,10 +154,9 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         new ParallelCommandGroup(
           drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
           intake.transitionCommand(Intake.State.IDLE),
-          indexer.transitionCommand(Indexer.State.PASS_THROUGH),
-          shooter.transitionCommand(Shooter.State.PASS_THROUGH)
+          indexer.transitionCommand(Indexer.State.PASS_THROUGH)
         ),
-        new WaitUntilCommand(() -> !indexer.notePresent()).withTimeout(defaultTimeout), // Don't just wait 4 seconds, wait until the note is gone
+        new WaitCommand(4),
         new ConditionalCommand(
           transitionCommand(State.TRAVERSING), 
           transitionCommand(State.STUCK_NOTE), 
@@ -200,22 +190,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       transitionCommand(State.TRAVERSING)
     )
     );
-
-    registerStateCommand(State.BASE_SHOT_SPEAKER, 
-      new ParallelCommandGroup(
-        shooter.transitionCommand(Shooter.State.BASE_SHOT_SPEAKER),
-        new WaitUntilCommand(()->shooter.isFlag(Shooter.State.READY)),
-        indexer.transitionCommand(Indexer.State.PASS_THROUGH)
-      )
-    );
-
-    registerStateCommand(State.HUMAN_INTAKE, 
-      new ParallelCommandGroup(
-        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.FACE_SOURCE),
-        indexer.transitionCommand(Indexer.State.AWAITING_NOTE_FRONT),
-        shooter.transitionCommand(Shooter.State.INTAKE)
-      )
-    );
   }
 
   @Override
@@ -239,7 +213,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     TRAVERSING,
     AUTO_GROUND_INTAKE,
     GROUND_INTAKE,
-    HUMAN_INTAKE,
     GROUND_EJECT,
     LOST_NOTE,
     STUCK_NOTE,

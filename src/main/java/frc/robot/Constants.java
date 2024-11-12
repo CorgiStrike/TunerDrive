@@ -28,7 +28,7 @@ import edu.wpi.first.math.util.Units;
  */
 public final class Constants {
 
-  public static final double defaultTimeout = 4.0;
+  public static final double defaultTImeout = 4.0;
 
   // Whether to use the old tuning (soft, original notes) or the new tuning (hard, new notes)
   public static final boolean USE_ORIGINAL_TUNING = true;
@@ -151,7 +151,7 @@ public final class Constants {
       public static final double feedSpeed = 50.0;
       public static final double humanPlayerIntakeSpeed = -1000 / 60.0; // rps
 
-      public static final double indexerTimeout = defaultTimeout;
+      public static final double indexerTimeout = defaultTImeout;
       public static final double ejectTimeout = 5.0;
       public static final double shootTimeout = 5.0;
 
@@ -396,6 +396,8 @@ public final class Constants {
       public static final double LOB_POSITION_STRAIGHT = 20.1 * (Math.PI / 180);
 
       public static final double LOB_POSITION_ARC = 50 * (Math.PI / 180);
+
+      public static double TRAP_POSITION = 58 * (Math.PI / 180); // RAD
 
       public static final double AUTO_SYNC_TOLERANCE = 0.1;
       public static final double AUTO_SYNC_MAX_VELOCITY = 0.1; // RAD/s

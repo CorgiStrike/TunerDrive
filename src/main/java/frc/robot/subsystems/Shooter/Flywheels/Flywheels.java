@@ -25,12 +25,8 @@ public class Flywheels extends StateMachine<Flywheels.State> {
     }
 
     private void registerStateCommands() {
-        registerStateCommand(State.SOFT_E_STOP, () -> {
-            io.stop();
-        });
-
         registerStateCommand(State.IDLE, () -> {
-            io.setFlywheelTarget(PARTIAL_SPINUP_VELOCITY);
+            io.stop();
         });
 
         registerStateCommand(
@@ -64,8 +60,8 @@ public class Flywheels extends StateMachine<Flywheels.State> {
     }
 
     private void registerStateTransitions() {
-        addOmniTransition(State.SOFT_E_STOP);
         addOmniTransition(State.IDLE);
+        addOmniTransition(State.PARTIAL_SPINUP);
         addOmniTransition(State.INTAKE);
         addOmniTransition(State.SPEAKER_AA);
         addOmniTransition(State.BASE_SHOT_SPEAKER);
@@ -105,8 +101,8 @@ public class Flywheels extends StateMachine<Flywheels.State> {
 
     public enum State {
         UNDETERMINED,
-        SOFT_E_STOP,
         IDLE,
+        PARTIAL_SPINUP,
         INTAKE,
         SPEAKER_AA,
         BASE_SHOT_SPEAKER,
