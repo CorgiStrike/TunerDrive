@@ -38,6 +38,10 @@ public class Vision {
         return prevPose;
     }
 
+    public EstimatedRobotPose getEstimatedGlobalPose() {
+        return pvCams[0].getEstimatedGlobalPose(prevPose).get();
+    }
+
     // camera settings - define in Constants
     public record PVCamera(
         String name,

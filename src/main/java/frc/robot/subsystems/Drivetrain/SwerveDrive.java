@@ -87,7 +87,7 @@ public class SwerveDrive extends SwerveDrivetrain{
     }
 
     private void updateVisionPose() {
-        var pose = vision.getRobotPose();
+        var pose = vision.getEstimatedGlobalPose();
         if (pose != null) {
             Pose3d rawPose = pose.estimatedPose;
             Pose2d calcPose = new Pose2d(rawPose.getX(),rawPose.getY(),new Rotation2d(rawPose.getRotation().getZ()));
