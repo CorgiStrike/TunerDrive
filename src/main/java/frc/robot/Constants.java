@@ -93,11 +93,11 @@ public final class Constants {
     public static PVCamera LEFT_SHOOTER_CAM =
         new PVCamera("pv_instance_1", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
     public static PVCamera RIGHT_SHOOTER_CAM =
-        new PVCamera("pv_instance_4", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+        new PVCamera("pv_instance_4", RIGHT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
     public static PVCamera LEFT_INTAKE_CAM =
-        new PVCamera("pv_instance_2", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+        new PVCamera("pv_instance_2", LEFT_INTAKE_CAM_POSE, AMBIGUITY_THRESHHOLD);
     public static PVCamera RIGHT_INTAKE_CAM =
-        new PVCamera("pv_instance_3", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+        new PVCamera("pv_instance_3", RIGHT_INTAKE_CAM_POSE, AMBIGUITY_THRESHHOLD);
   }
 
   public static final class Intake {
