@@ -7,7 +7,9 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.SMF.StateMachine;
 import frc.robot.Vision.Limelight;
@@ -18,7 +20,8 @@ import frc.robot.Vision.Limelight;
  */
 public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrain.State>{
     public final SwerveDrive swerveDrive;
-    private final Limelight limelight = new Limelight("limelight");
+    private final Limelight limelight = new Limelight("limelight"); 
+    private final PIDController anglePID = new PIDController(0.1, 0.0, 0.0);
     private double maxSpeed = 0.0, maxAngularRate = 0.0;
     private Supplier<Double> xSupplier = null, ySupplier = null, turnSupplier = null;
 
@@ -43,7 +46,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         return run(swerveDrive.getRequestRunnable(requestSupplier));
     }
 
-    private void drive(double maxSpeed, double maxAngularRate, Double xValue, Double yValue, Double turnValue, Boolean fieldOriented) {
+    private void drive(Double maxSpeed, Double maxAngularRate, Double xValue, Double yValue, Double turnValue, Boolean fieldOriented) {
         if (fieldOriented) {
             final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
                 .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
@@ -73,26 +76,42 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
 
     @Override
     protected void update() {
-       
+        swerveDrive.periodic();
     }
 
     private void registerStateTransitions() {
         addOmniTransition(State.AUTO_INTAKE);
-
         addOmniTransition(State.IDLE);
         addOmniTransition(State.TRAVERSING);
+        addOmniTransition(State.AMP);
+        addOmniTransition(State.SOURCE);
+        addOmniTransition(State.SPEAKER_AA);
     }
 
 
     private void registerStateCommands() {
-        registerStateCommand(State.IDLE, new RunCommand(() -> swerveDrive.periodic()));
+        registerStateCommand(State.IDLE, new InstantCommand(() -> {
+            drive(0.0, 0.0, 0.0, 0.0, 0.0, false);
+        }));
+
         registerStateCommand(State.TRAVERSING, new RunCommand(() -> {
-            swerveDrive.periodic();
             drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnSupplier.get(), true);
         }));
+
         registerStateCommand(State.AUTO_INTAKE, new RunCommand(() -> {
             autoIntakeDrive();
-            swerveDrive.periodic();
+        }).repeatedly());
+
+        registerStateCommand(State.AMP, new RunCommand(() -> {
+            pointTowardsAngle(0.0);
+        }).repeatedly());
+
+        registerStateCommand(State.SOURCE, new RunCommand(() -> {
+            pointTowardsAngle(0.0);
+        }).repeatedly());
+
+        registerStateCommand(State.SPEAKER_AA, new RunCommand(() -> {
+            pointTowardsAngle(0.0);
         }).repeatedly());
     }
 
@@ -108,15 +127,28 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         }
         if(tx > 20) turn = -tx/100;
         else turn = -tx/80;
-        
+
+        if(ta == 0){
+            drive = 0.0;
+            turn = 0.0;
+        }
 
         drive(maxSpeed, maxAngularRate, drive, 0.0, turn, false);
+    }
+
+    private void pointTowardsAngle(Double angle) {
+        anglePID.setSetpoint(angle);
+        Double turnValue = anglePID.calculate(swerveDrive.getPigeon2().getAngle());
+        drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnValue, true);
     }
 
     public enum State {
         UNDETERMINED,
         IDLE,
         TRAVERSING,
-        AUTO_INTAKE
+        AUTO_INTAKE,
+        AMP,
+        SOURCE,
+        SPEAKER_AA
     }
 }
