@@ -1,16 +1,25 @@
 package frc.robot.subsystems.Drivetrain;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.ReplanningConfig;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.SMF.StateMachine;
 import frc.robot.Vision.Limelight;
 
@@ -24,22 +33,30 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
     private final PIDController anglePID = new PIDController(0.1, 0.0, 0.0);
     private double maxSpeed = 0.0, maxAngularRate = 0.0;
     private Supplier<Double> xSupplier = null, ySupplier = null, turnSupplier = null;
+    private final SwerveModuleConstants[] modules;
+    private final BooleanSupplier mirrorPath;
 
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, double maxSpeed, double maxAngularRate, SwerveModuleConstants... modules) {
+    public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, double maxSpeed, double maxAngularRate, BooleanSupplier mirrorPath, SwerveModuleConstants... modules) {
         super("CommandSwerveDrive", State.UNDETERMINED, State.class);
         swerveDrive = new SwerveDrive(driveTrainConstants, OdometryUpdateFrequency, modules);
+        this.modules = modules;
+        this.mirrorPath = mirrorPath;
         this.maxSpeed = maxSpeed;
         this.maxAngularRate = maxAngularRate;
         registerStateTransitions();
         registerStateCommands();
+        configurePathPlanner();
     }
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double maxSpeed, double maxAngularRate, SwerveModuleConstants... modules) {
+    public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double maxSpeed, double maxAngularRate, BooleanSupplier mirrorPath, SwerveModuleConstants... modules) {
         super("RobotContainer", State.UNDETERMINED, State.class);
         swerveDrive = new SwerveDrive(driveTrainConstants, modules);
+        this.modules = modules;
+        this.mirrorPath = mirrorPath;
         this.maxSpeed = maxSpeed;
         this.maxAngularRate = maxAngularRate;
         registerStateTransitions();
         registerStateCommands();
+        configurePathPlanner();
     }
 
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
@@ -61,6 +78,20 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
             applyRequest(()->drive.withVelocityX(xValue * maxSpeed).withVelocityY(yValue * maxSpeed).withRotationalRate(turnValue * maxAngularRate)).schedule();
         }
         
+    }
+
+    private void driveChassisSpeeds(ChassisSpeeds speeds) {
+        drive(maxSpeed, maxAngularRate, speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, false);
+    }
+
+    private ChassisSpeeds getChassisSpeeds() {
+        SwerveDriveKinematics kinematics = new SwerveDriveKinematics(new Translation2d[] {
+            new Translation2d(modules[0].LocationX, modules[0].LocationY),
+            new Translation2d(modules[1].LocationX, modules[1].LocationY),
+            new Translation2d(modules[2].LocationX, modules[2].LocationY),
+            new Translation2d(modules[3].LocationX, modules[3].LocationY)
+        });
+        return kinematics.toChassisSpeeds(swerveDrive.getState().ModuleStates);
     }
 
     public void configureBindings(Supplier<Double> xSupplier, Supplier<Double> ySupplier, Supplier<Double> turnSupplier) {
@@ -115,6 +146,25 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         }).repeatedly());
     }
 
+    private void configurePathPlanner() {
+        final Double driveBaseRadius = Math.hypot(modules[0].LocationX, modules[0].LocationY);
+        
+        AutoBuilder.configureHolonomic(
+            this::getPose,
+            swerveDrive::seedFieldRelative,
+            this::getChassisSpeeds,
+            this::driveChassisSpeeds,
+            new HolonomicPathFollowerConfig(
+                AutoConstants.TRANSLATION_PID, 
+                AutoConstants.ANGLE_PID, 
+                maxSpeed, 
+                driveBaseRadius, 
+                new ReplanningConfig()),
+            mirrorPath,
+            this
+        );
+    }
+
     private void autoIntakeDrive() {
         var tx = limelight.getTX();
         var ta = limelight.getTA();
@@ -140,6 +190,10 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         anglePID.setSetpoint(angle);
         Double turnValue = anglePID.calculate(swerveDrive.getPigeon2().getAngle());
         drive(maxSpeed, maxAngularRate, xSupplier.get(), ySupplier.get(), turnValue, true);
+    }
+
+    public Pose2d getPose() {
+        return swerveDrive.getState().Pose;
     }
 
     public enum State {

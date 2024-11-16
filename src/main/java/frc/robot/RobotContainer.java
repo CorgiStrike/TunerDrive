@@ -4,11 +4,14 @@
 
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -30,7 +33,23 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private final Intake intake;
   private final Indexer indexer;
 
-  private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
+  private final BooleanSupplier flipPath = () ->{var alliance = DriverStation.getAlliance();
+    if (alliance.isPresent()) {
+        return alliance.get() == DriverStation.Alliance.Red & !DriverStation.isTeleop();
+    }
+    return false;
+  };
+
+  private final CommandSwerveDrivetrain drivetrain = new CommandSwerveDrivetrain(
+    TunerConstants.DrivetrainConstants, 
+    TunerConstants.kSpeedAt12VoltsMps, 
+    Constants.Drivetrain.MAX_ANGULAR_RATE, 
+    flipPath, 
+    TunerConstants.FrontLeft, 
+    TunerConstants.FrontRight, 
+    TunerConstants.BackLeft, 
+    TunerConstants.BackRight
+  );
 
   private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
 

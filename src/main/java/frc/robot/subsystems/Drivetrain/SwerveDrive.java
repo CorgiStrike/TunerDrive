@@ -58,8 +58,8 @@ public class SwerveDrive extends SwerveDrivetrain{
 
     private void initVision() {
         camSettings = List.of(
-            //Constants.Vision.LEFT_SHOOTER_CAM,
-            //Constants.Vision.RIGHT_SHOOTER_CAM,
+            Constants.Vision.LEFT_SHOOTER_CAM,
+            Constants.Vision.RIGHT_SHOOTER_CAM,
             Constants.Vision.LEFT_INTAKE_CAM,
             Constants.Vision.RIGHT_INTAKE_CAM
             );
@@ -93,7 +93,6 @@ public class SwerveDrive extends SwerveDrivetrain{
             Pose2d calcPose = new Pose2d(rawPose.getX(),rawPose.getY(),new Rotation2d(rawPose.getRotation().getZ()));
             field.setRobotPose(calcPose);
             this.addVisionMeasurement(calcPose, pose.timestampSeconds);
-        
         }
     }
 
