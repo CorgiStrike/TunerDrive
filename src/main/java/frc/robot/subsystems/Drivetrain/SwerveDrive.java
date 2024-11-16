@@ -27,11 +27,11 @@ import frc.robot.Vision.Vision.PVCamera;
  * subsystem so it can be used in command-based projects easily.
  */
 public class SwerveDrive extends SwerveDrivetrain{
-    private static final double kSimLoopPeriod = 0.005; // 5 ms
+    private static final double simLoopPeriod = 0.005; // 5 ms
     private List<PVCamera> camSettings;
     private Vision vision;
-    private Notifier m_simNotifier = null;
-    private double m_lastSimTime;
+    private Notifier simNotifier = null;
+    private double lastSimTime;
     private Field2d field = new Field2d();
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
@@ -72,18 +72,18 @@ public class SwerveDrive extends SwerveDrivetrain{
     }
 
     private void startSimThread() {
-        m_lastSimTime = Utils.getCurrentTimeSeconds();
+        lastSimTime = Utils.getCurrentTimeSeconds();
 
         /* Run simulation at a faster rate so PID gains behave more reasonably */
-        m_simNotifier = new Notifier(() -> {
+        simNotifier = new Notifier(() -> {
             final double currentTime = Utils.getCurrentTimeSeconds();
-            double deltaTime = currentTime - m_lastSimTime;
-            m_lastSimTime = currentTime;
+            double deltaTime = currentTime - lastSimTime;
+            lastSimTime = currentTime;
 
             /* use the measured time delta, get battery voltage from WPILib */
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
-        m_simNotifier.startPeriodic(kSimLoopPeriod);
+        simNotifier.startPeriodic(simLoopPeriod);
     }
 
     private void updateVisionPose() {
