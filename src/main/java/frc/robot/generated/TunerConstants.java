@@ -38,7 +38,7 @@ private static final ClosedLoopOutputType driveClosedLoopOutput = ClosedLoopOutp
 
 // The stator current at which the wheels start to slip;
 // This needs to be tuned to your individual robot
-private static final double kSlipCurrentA = 150.0;
+private static final double slipCurrentA = 150.0;
 
 // Initial configs for the drive and steer motors and the CANcoder; these cannot be null.
 // Some configs will be overwritten; check the `with*InitialConfigs()` API documentation.
@@ -57,51 +57,51 @@ private static final Pigeon2Configuration pigeonConfigs = null;
 
 // Theoretical free speed (m/s) at 12v applied output;
 // This needs to be tuned to your individual robot
-public static final double kSpeedAt12VoltsMps = 10.43;
+public static final double speedAt12VoltsMps = 10.43;
 
 // Every 1 rotation of the azimuth results in kCoupleRatio drive motor turns;
 // This may need to be tuned to your individual robot
-private static final double kCoupleRatio = 3.5714285714285716;
+private static final double coupleRatio = 3.5714285714285716;
 
-private static final double kDriveGearRatio = 6.122448979591837;
-private static final double kSteerGearRatio = 21.428571428571427;
-private static final double kWheelRadiusInches = 4;
+private static final double driveGearRatio = 6.122448979591837;
+private static final double steerGearRatio = 21.428571428571427;
+private static final double wheelRadiusInches = 4;
 
-private static final boolean kInvertLeftSide = false;
-private static final boolean kInvertRightSide = true;
+private static final boolean invertLeftSide = false;
+private static final boolean invertRightSide = true;
 
-private static final String kCANbusName = "Default Name";
-private static final int kPigeonId = 60;
+private static final String CANbusName = "Default Name";
+private static final int pigeonId = 60;
 
 
 // These are only used for simulation
-private static final double kSteerInertia = 0.00001;
-private static final double kDriveInertia = 0.001;
+private static final double steerInertia = 0.00001;
+private static final double driveInertia = 0.001;
 // Simulated voltage necessary to overcome friction
-private static final double kSteerFrictionVoltage = 0.25;
-private static final double kDriveFrictionVoltage = 0.25;
+private static final double steerFrictionVoltage = 0.25;
+private static final double driveFrictionVoltage = 0.25;
 
 public static final SwerveDrivetrainConstants DrivetrainConstants = new SwerveDrivetrainConstants()
-        .withCANbusName(kCANbusName)
-        .withPigeon2Id(kPigeonId)
+        .withCANbusName(CANbusName)
+        .withPigeon2Id(pigeonId)
         .withPigeon2Configs(pigeonConfigs);
 
 private static final SwerveModuleConstantsFactory ConstantCreator = new SwerveModuleConstantsFactory()
-        .withDriveMotorGearRatio(kDriveGearRatio)
-        .withSteerMotorGearRatio(kSteerGearRatio)
-        .withWheelRadius(kWheelRadiusInches)
-        .withSlipCurrent(kSlipCurrentA)
+        .withDriveMotorGearRatio(driveGearRatio)
+        .withSteerMotorGearRatio(steerGearRatio)
+        .withWheelRadius(wheelRadiusInches)
+        .withSlipCurrent(slipCurrentA)
         .withSteerMotorGains(steerGains)
         .withDriveMotorGains(driveGains)
         .withSteerMotorClosedLoopOutput(steerClosedLoopOutput)
         .withDriveMotorClosedLoopOutput(driveClosedLoopOutput)
-        .withSpeedAt12VoltsMps(kSpeedAt12VoltsMps)
-        .withSteerInertia(kSteerInertia)
-        .withDriveInertia(kDriveInertia)
-        .withSteerFrictionVoltage(kSteerFrictionVoltage)
-        .withDriveFrictionVoltage(kDriveFrictionVoltage)
+        .withSpeedAt12VoltsMps(speedAt12VoltsMps)
+        .withSteerInertia(steerInertia)
+        .withDriveInertia(driveInertia)
+        .withSteerFrictionVoltage(steerFrictionVoltage)
+        .withDriveFrictionVoltage(driveFrictionVoltage)
         .withFeedbackSource(SteerFeedbackType.FusedCANcoder)
-        .withCouplingGearRatio(kCoupleRatio)
+        .withCouplingGearRatio(coupleRatio)
         .withDriveMotorInitialConfigs(driveInitialConfigs)
         .withSteerMotorInitialConfigs(steerInitialConfigs)
         .withCANcoderInitialConfigs(cancoderInitialConfigs);
@@ -149,15 +149,15 @@ private static final double kBackRightYPosInches = -12.375;
 
 
 public static final SwerveModuleConstants FrontLeft = ConstantCreator.createModuleConstants(
-        kFrontLeftSteerMotorId, kFrontLeftDriveMotorId, kFrontLeftEncoderId, kFrontLeftEncoderOffset, Units.inchesToMeters(kFrontLeftXPosInches), Units.inchesToMeters(kFrontLeftYPosInches), kInvertLeftSide)
+        kFrontLeftSteerMotorId, kFrontLeftDriveMotorId, kFrontLeftEncoderId, kFrontLeftEncoderOffset, Units.inchesToMeters(kFrontLeftXPosInches), Units.inchesToMeters(kFrontLeftYPosInches), invertLeftSide)
         .withSteerMotorInverted(kFrontLeftSteerInvert);
 public static final SwerveModuleConstants FrontRight = ConstantCreator.createModuleConstants(
-        kFrontRightSteerMotorId, kFrontRightDriveMotorId, kFrontRightEncoderId, kFrontRightEncoderOffset, Units.inchesToMeters(kFrontRightXPosInches), Units.inchesToMeters(kFrontRightYPosInches), kInvertRightSide)
+        kFrontRightSteerMotorId, kFrontRightDriveMotorId, kFrontRightEncoderId, kFrontRightEncoderOffset, Units.inchesToMeters(kFrontRightXPosInches), Units.inchesToMeters(kFrontRightYPosInches), invertRightSide)
         .withSteerMotorInverted(kFrontRightSteerInvert);
 public static final SwerveModuleConstants BackLeft = ConstantCreator.createModuleConstants(
-        kBackLeftSteerMotorId, kBackLeftDriveMotorId, kBackLeftEncoderId, kBackLeftEncoderOffset, Units.inchesToMeters(kBackLeftXPosInches), Units.inchesToMeters(kBackLeftYPosInches), kInvertLeftSide)
+        kBackLeftSteerMotorId, kBackLeftDriveMotorId, kBackLeftEncoderId, kBackLeftEncoderOffset, Units.inchesToMeters(kBackLeftXPosInches), Units.inchesToMeters(kBackLeftYPosInches), invertLeftSide)
         .withSteerMotorInverted(kBackLeftSteerInvert);
 public static final SwerveModuleConstants BackRight = ConstantCreator.createModuleConstants(
-        kBackRightSteerMotorId, kBackRightDriveMotorId, kBackRightEncoderId, kBackRightEncoderOffset, Units.inchesToMeters(kBackRightXPosInches), Units.inchesToMeters(kBackRightYPosInches), kInvertRightSide)
+        kBackRightSteerMotorId, kBackRightDriveMotorId, kBackRightEncoderId, kBackRightEncoderOffset, Units.inchesToMeters(kBackRightXPosInches), Units.inchesToMeters(kBackRightYPosInches), invertRightSide)
         .withSteerMotorInverted(kBackRightSteerInvert);
 }

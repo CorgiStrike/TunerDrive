@@ -42,7 +42,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   private final CommandSwerveDrivetrain drivetrain = new CommandSwerveDrivetrain(
     TunerConstants.DrivetrainConstants, 
-    TunerConstants.kSpeedAt12VoltsMps, 
+    TunerConstants.speedAt12VoltsMps, 
     Constants.Drivetrain.MAX_ANGULAR_RATE, 
     flipPath, 
     TunerConstants.FrontLeft, 
@@ -51,7 +51,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     TunerConstants.BackRight
   );
 
-  private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
+  private final Telemetry logger = new Telemetry(TunerConstants.speedAt12VoltsMps);
 
   private void configureBindings() {
     drivetrain.configureBindings(controllerBindings::getDriveXValue, controllerBindings::getDriveYValue, controllerBindings::getDriveTurnValue);
@@ -119,7 +119,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   }
 
   private void registerStateCommands() {
-   registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
+    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
       intake.transitionCommand(Intake.State.IDLE),
       indexer.transitionCommand(Indexer.State.SOFT_E_STOP)
