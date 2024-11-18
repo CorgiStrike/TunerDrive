@@ -26,6 +26,8 @@ public interface ControllerBindings {
 
   Trigger baseShot();
 
+  Trigger humanIntake();
+
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }

@@ -373,7 +373,7 @@ public static final class PhysicalConstants {
         public static final double BASE_SHOT_POSITION = 55 * (Math.PI / 180); // RAD - originally 59
         public static final double AUTO_START_POSITION = 55 * (Math.PI / 180); // RAD
         public static final double AMP_POSITION = 50 * (Math.PI / 180); // RAD
-        public static final double FULL_STOW_POSITION = 20.5 * (Math.PI / 180); // RAD
+        public static final double FULL_STOW_POSITION = 25 * (Math.PI / 180); // RAD
         public static final double PARTIAL_STOW_POSITION = 40 * (Math.PI / 180); // RAD
         public static final double CHUTE_INTAKE_POSITION = 40 * (Math.PI / 180); // RAD
         public static final double LOB_POSITION_STRAIGHT = 20.1 * (Math.PI / 180);

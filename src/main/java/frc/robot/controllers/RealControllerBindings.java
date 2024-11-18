@@ -73,4 +73,9 @@ public class RealControllerBindings implements ControllerBindings {
   public Trigger baseShot(){
     return gamepad.b();
   }
+
+  @Override
+  public Trigger humanIntake(){
+    return gamepad.x();
+  }
 }

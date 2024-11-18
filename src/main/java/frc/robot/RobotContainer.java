@@ -9,6 +9,8 @@ import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -70,6 +72,9 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     controllerBindings.baseShot()
     .onTrue(transitionCommand(State.BASE_SHOT));
 
+    controllerBindings.humanIntake()
+    .onTrue(transitionCommand(State.HUMAN_INTAKE));
+
     if (Utils.isSimulation()) {
       drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -96,6 +101,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     configureBindings();
     registerStateTransitions();
     registerStateCommands();
+
+    initializeShuffleboardTabs();
   }
 
   private void registerStateTransitions() {
@@ -103,7 +110,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     addTransition(State.TRAVERSING, State.GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_EJECT);
     addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
-    addTransition(State.TRAVERSING, State.BASE_SHOT);
+    addOmniTransition(State.BASE_SHOT);
+    addOmniTransition(State.HUMAN_INTAKE);
 
     addOmniTransition(State.SOFT_E_STOP);
     addOmniTransition(State.TRAVERSING);
@@ -148,6 +156,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
         intake.transitionCommand(Intake.State.IDLE),
         indexer.transitionCommand(Indexer.State.IDLE),
+        shooter.transitionCommand(Shooter.State.STOW),
         shooter.partialFlywheelSpinup()
       ),
       new WaitUntilCommand(() -> indexer.getState() == Indexer.State.LOST_NOTE),
@@ -198,11 +207,33 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         transitionCommand(State.TRAVERSING)
       )
     );
+
+    registerStateCommand(State.HUMAN_INTAKE,
+      new SequentialCommandGroup(
+        new ParallelCommandGroup(
+          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING), //maybe change eventually to point towards
+          indexer.transitionCommand(Indexer.State.AWAITING_NOTE_FRONT),
+          shooter.transitionCommand(Shooter.State.CHUTE_INTAKE),
+          intake.transitionCommand(Intake.State.IDLE)
+        ),
+        new WaitUntilCommand(()-> indexer.getState() == Indexer.State.HAS_NOTE),
+        transitionCommand(State.TRAVERSING)
+      )
+    );
   }
 
 
   private boolean feedToShooter(){
     return controllerBindings.feedShooter().getAsBoolean();
+  }
+
+  private void initializeShuffleboardTabs(){
+    ShuffleboardTab teleTab = Shuffleboard.getTab("Tele");
+
+    teleTab
+      .addString("Indexer State", () -> indexer.getState().toString())
+      .withPosition(3, 3)
+      .withSize(2,1);
   }
 
   @Override
@@ -229,6 +260,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     GROUND_EJECT,
     LOST_NOTE,
     CLEANSE,
-    BASE_SHOT
+    BASE_SHOT,
+    HUMAN_INTAKE
   }
 }
