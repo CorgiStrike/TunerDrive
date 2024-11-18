@@ -24,6 +24,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
+
 import static frc.robot.Constants.Vision.*;
 
 public class Vision {
@@ -44,7 +46,7 @@ public class Vision {
 
     public Pose2d getRobotPose() {
         Optional<EstimatedRobotPose> pose = pvCams[0].getEstimatedGlobalPose(prevPose);
-        Pose3d robotPose = pose.get().estimatedPose;
+        Pose3d robotPose = pose.isPresent() ? pose.get().estimatedPose : new Pose3d();
         prevPose = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(robotPose.getRotation().getZ()));
         return prevPose;
     }
@@ -165,11 +167,14 @@ public class Vision {
         for(AprilTagCamera cam:pvCams){
             PhotonPipelineResult raw = preProcess(cam.camera, cam.cam.ambiguityThreshhold, 2.0);
             var estimate = cam.photonPoseEstimator.update(raw);
-            var stdDev = getXYThetaStdDev(estimate.get(), cam.cam.trustCutoff);
-            var estimation = estimate.get();
-            var pose = new Pose2d(estimation.estimatedPose.getX(), estimation.estimatedPose.getY(), new Rotation2d(estimation.estimatedPose.getRotation().getZ()));
-            VisionEstimate finalEstimate = new VisionEstimate(prevPose, stdDev, estimation.timestampSeconds);
-            estimates[i] = finalEstimate;
+            if(estimate.isPresent()){
+                var estimation = estimate.get();
+                var stdDev = getXYThetaStdDev(estimation, cam.cam.trustCutoff);
+                var pose = new Pose2d(estimation.estimatedPose.getX(), estimation.estimatedPose.getY(), new Rotation2d(estimation.estimatedPose.getRotation().getZ()));
+                VisionEstimate finalEstimate = new VisionEstimate(pose, stdDev, estimation.timestampSeconds);
+                estimates[i] = finalEstimate;
+                feild.setRobotPose(pose);
+            }
             i++;
         }
         return estimates;
