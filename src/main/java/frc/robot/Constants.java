@@ -18,7 +18,6 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -93,14 +92,19 @@ public final class Constants {
             Units.inchesToMeters(8.920582),
             new Rotation3d(0, Math.toRadians(-30), Math.toRadians(180 + 45)));
     
+    public static final double LEFT_SHOOTER_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+    public static final double RIGHT_SHOOTER_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+    public static final double LEFT_INTAKE_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+    public static final double RIGHT_INTAKE_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+    
     public static PVCamera LEFT_SHOOTER_CAM =
-        new PVCamera("pv_instance_1", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+        new PVCamera("pv_instance_1", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD, LEFT_SHOOTER_CAM_TRUST_CUTOFF);
     public static PVCamera RIGHT_SHOOTER_CAM =
-        new PVCamera("pv_instance_4", RIGHT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+        new PVCamera("pv_instance_4", RIGHT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD, RIGHT_SHOOTER_CAM_TRUST_CUTOFF);
     public static PVCamera LEFT_INTAKE_CAM =
-        new PVCamera("pv_instance_2", LEFT_INTAKE_CAM_POSE, AMBIGUITY_THRESHHOLD);
+        new PVCamera("pv_instance_2", LEFT_INTAKE_CAM_POSE, AMBIGUITY_THRESHHOLD, LEFT_INTAKE_CAM_TRUST_CUTOFF);
     public static PVCamera RIGHT_INTAKE_CAM =
-        new PVCamera("pv_instance_3", RIGHT_INTAKE_CAM_POSE, AMBIGUITY_THRESHHOLD);
+        new PVCamera("pv_instance_3", RIGHT_INTAKE_CAM_POSE, AMBIGUITY_THRESHHOLD, RIGHT_INTAKE_CAM_TRUST_CUTOFF);
   }
 
   public static final class Intake {
