@@ -22,6 +22,10 @@ public interface ControllerBindings {
 
   Trigger stow();
 
+  Trigger feedShooter();
+
+  Trigger baseShot();
+
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }

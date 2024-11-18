@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -22,6 +23,9 @@ import frc.robot.subsystems.Intake.Intake;
 import frc.robot.subsystems.Intake.IntakeIOReal;
 import frc.robot.subsystems.Indexer.Indexer;
 import frc.robot.subsystems.Indexer.IndexerIOReal;
+import frc.robot.subsystems.Shooter.Shooter;
+import frc.robot.subsystems.Shooter.Arm.ArmIOReal;
+import frc.robot.subsystems.Shooter.Flywheel.FlywheelIOReal;
 
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
@@ -30,6 +34,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   //initialize subsystems
   private final Intake intake;
   private final Indexer indexer;
+  private final Shooter shooter;
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
 
@@ -62,6 +67,9 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     controllerBindings.stow()
     .onTrue(transitionCommand(State.TRAVERSING));
 
+    controllerBindings.baseShot()
+    .onTrue(transitionCommand(State.BASE_SHOT));
+
     if (Utils.isSimulation()) {
       drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -74,11 +82,16 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     //define subsystems
     intake = new Intake(new IntakeIOReal());
     indexer = new Indexer(new IndexerIOReal());
+    shooter = new Shooter(
+      new ArmIOReal(),
+      new FlywheelIOReal(),
+      () -> new Translation2d(0, 0)); //add when we have bot pose
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
     addChildSubsystem(intake);
     addChildSubsystem(indexer);
+    addChildSubsystem(shooter);
 
     configureBindings();
     registerStateTransitions();
@@ -86,12 +99,11 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   }
 
   private void registerStateTransitions() {
-    //talk to Jonah about changing these to omnis? - maybe disallow the transition from auto ground intake to ground intake - Jonah, if I
-    //forget to talk abt this w/ you, please remind me
     addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_EJECT);
     addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
+    addTransition(State.TRAVERSING, State.BASE_SHOT);
 
     addOmniTransition(State.SOFT_E_STOP);
     addOmniTransition(State.TRAVERSING);
@@ -103,7 +115,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
       intake.transitionCommand(Intake.State.IDLE),
-      indexer.transitionCommand(Indexer.State.SOFT_E_STOP)
+      indexer.transitionCommand(Indexer.State.SOFT_E_STOP),
+      shooter.transitionCommand(Shooter.State.SOFT_E_STOP)
     ));
 
     registerStateCommand(State.GROUND_INTAKE, new SequentialCommandGroup(
@@ -134,7 +147,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       new ParallelCommandGroup(
         drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
         intake.transitionCommand(Intake.State.IDLE),
-        indexer.transitionCommand(Indexer.State.IDLE)
+        indexer.transitionCommand(Indexer.State.IDLE),
+        shooter.partialFlywheelSpinup()
       ),
       new WaitUntilCommand(() -> indexer.getState() == Indexer.State.LOST_NOTE),
       transitionCommand(State.LOST_NOTE)                                                                                              
@@ -145,7 +159,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         new ParallelCommandGroup(
           drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
           intake.transitionCommand(Intake.State.IDLE),
-          indexer.transitionCommand(Indexer.State.PASS_THROUGH)
+          indexer.transitionCommand(Indexer.State.PASS_THROUGH),
+          shooter.transitionCommand(Shooter.State.PASS_THROUGH)
         ),
         new WaitCommand(4),
         new ConditionalCommand(
@@ -166,8 +181,28 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         new WaitCommand(2.5), //provide the drivers some time to see the error LEDs
         transitionCommand(State.TRAVERSING)
       )
-      
     );
+
+    registerStateCommand(State.BASE_SHOT, 
+      new SequentialCommandGroup(
+        new ParallelCommandGroup(
+          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
+          intake.transitionCommand(Intake.State.IDLE),
+          indexer.transitionCommand(Indexer.State.IDLE)
+        ),
+        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
+        shooter.transitionCommand(Shooter.State.BASE_SHOT),
+        new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
+        indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
+        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
+        transitionCommand(State.TRAVERSING)
+      )
+    );
+  }
+
+
+  private boolean feedToShooter(){
+    return controllerBindings.feedShooter().getAsBoolean();
   }
 
   @Override
@@ -193,6 +228,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     GROUND_INTAKE,
     GROUND_EJECT,
     LOST_NOTE,
-    CLEANSE
+    CLEANSE,
+    BASE_SHOT
   }
 }

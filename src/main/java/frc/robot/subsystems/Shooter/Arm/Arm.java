@@ -6,7 +6,6 @@ import static frc.robot.Constants.doubleEqual;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.SMF.StateMachine;
 import frc.robot.subsystems.Shooter.Arm.ArmIO.ArmIOInputs;
 import java.util.function.DoubleSupplier;
@@ -17,32 +16,23 @@ public class Arm extends StateMachine<Arm.State> {
 
   // AA stands for active adjust
   private final DoubleSupplier distanceAAProvider;
-  private final DoubleSupplier movingDistanceAAProvider;
   private final DoubleSupplier lobAASupplier;
-  private final DoubleSupplier tuneSupplier;
 
   public Arm(
       ArmIO io,
       DoubleSupplier distanceAAProvider,
-      DoubleSupplier lobAASupplier,
-      DoubleSupplier movingDistanceAAProvider,
-      DoubleSupplier tuneSupplier,
-      Trigger tuningInc,
-      Trigger tuningDec,
-      Trigger tuningStop) {
+      DoubleSupplier lobAASupplier) {
     super("Shooter Arm", State.UNDETERMINED, State.class);
 
     this.io = io;
     this.distanceAAProvider = distanceAAProvider;
     this.lobAASupplier = lobAASupplier;
-    this.movingDistanceAAProvider = movingDistanceAAProvider;
-    this.tuneSupplier = tuneSupplier;
 
-    registerStateCommands(tuningInc, tuningDec, tuningStop);
+    registerStateCommands();
     registerTransitions();
   }
 
-  private void registerStateCommands(Trigger tuningInc, Trigger tuningDec, Trigger tuningStop) {
+  private void registerStateCommands() {
     registerStateCommand(State.SOFT_E_STOP, io::stop);
 
     registerStateCommand(State.AMP, holdPositionCommand(() -> AMP_POSITION));
@@ -58,17 +48,10 @@ public class Arm extends StateMachine<Arm.State> {
     registerStateCommand(State.LOB_ARC, holdPositionCommand(() -> LOB_POSITION_ARC));
 
     registerStateCommand(State.SHOT_ACTIVE_ADJUST, holdPositionCommand(distanceAAProvider));
-
-    registerStateCommand(
-        State.MOVING_SHOT_ACTIVE_ADJUST, holdPositionCommand(movingDistanceAAProvider));
-
-    registerStateCommand(State.TUNE, holdPositionCommand(tuneSupplier));
   }
 
   private void registerTransitions() {
     addOmniTransition(State.SOFT_E_STOP);
-
-    addTransition(State.SOFT_E_STOP, State.VOLTAGE_CALC);
 
     // it going from one to the other wont conflict with anything within the arm subsystem
     addOmniTransition(State.AMP);
@@ -82,7 +65,6 @@ public class Arm extends StateMachine<Arm.State> {
     addOmniTransition(State.SHOT_ACTIVE_ADJUST);
     addOmniTransition(State.MOVING_SHOT_ACTIVE_ADJUST);
     addOmniTransition(State.LOB_ACTIVE_ADJUST);
-    addOmniTransition(State.TUNE);
   }
 
   private Command holdPositionCommand(DoubleSupplier positionProvider) {
@@ -144,12 +126,10 @@ public class Arm extends StateMachine<Arm.State> {
     SHOT_ACTIVE_ADJUST,
     PARTIAL_STOW,
     FULL_STOW,
-    VOLTAGE_CALC,
     LOB_STRAIGHT,
     LOB_ARC,
     MOVING_SHOT_ACTIVE_ADJUST,
     LOB_ACTIVE_ADJUST,
-    TUNE,
     // flags
     AT_TARGET
   }
