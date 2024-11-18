@@ -12,9 +12,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.SMF.SubsystemManagerFactory;
 
 public class Robot extends LoggedRobot {
+
   private RobotContainer m_robotContainer;
-
-
 
   @Override
   public void robotInit() {
