@@ -48,17 +48,8 @@ public class Indexer extends StateMachine<Indexer.State>{
                 .withTimeout(Hardware.indexerTimeout) //stop it in case the indexer is having a hard time
                 .andThen(new ConditionalCommand(
                     transitionCommand(State.HAS_NOTE), //transition to HAS_NOTE if we have the note correctly
-                    new ConditionalCommand(
-                        transitionCommand(State.STUCK_NOTE), //transition to stuck note if we have a note, but can't index it
-                        transitionCommand(State.LOST_NOTE), //transition to lost note if we don't have the note
-                        () -> notePresent()), 
+                    transitionCommand(State.LOST_NOTE), //transition to LOST_NOTE if we lost the note
                     () -> hasNoteCorrectly()))
-        ));
-
-        registerStateCommand(State.STUCK_NOTE, new SequentialCommandGroup(
-            new InstantCommand(io::stop), // configure robotContainer to change LEDs
-            new WaitUntilCommand(() -> !notePresent()),
-            transitionCommand(State.IDLE)
         ));
 
         registerStateCommand(State.LOST_NOTE, new SequentialCommandGroup(
@@ -83,7 +74,7 @@ public class Indexer extends StateMachine<Indexer.State>{
                 new WaitUntilCommand(() -> !notePresent()).withTimeout(Hardware.ejectTimeout),
                 new ConditionalCommand(
                     transitionCommand(State.IDLE),
-                    transitionCommand(State.STUCK_NOTE),
+                    transitionCommand(State.LOST_NOTE),
                     () -> !notePresent()
                 )
             )
@@ -94,7 +85,7 @@ public class Indexer extends StateMachine<Indexer.State>{
                 new InstantCommand (() -> io.setBeltTargetVelocity(Hardware.feedSpeed)),
                 new WaitUntilCommand(() -> !notePresent()).withTimeout(Hardware.shootTimeout),
                 new ConditionalCommand(
-                    transitionCommand(State.STUCK_NOTE), 
+                    transitionCommand(State.LOST_NOTE), 
                     transitionCommand(State.IDLE),
                     () -> notePresent())
             )
@@ -116,7 +107,6 @@ public class Indexer extends StateMachine<Indexer.State>{
         addOmniTransition(State.IDLE);
         addOmniTransition(State.INDEXING);
         addOmniTransition(State.PASS_THROUGH);
-        addOmniTransition(State.STUCK_NOTE);
         addOmniTransition(State.LOST_NOTE);
 
         addTransition(State.INDEXING, State.HAS_NOTE);
@@ -190,7 +180,6 @@ public class Indexer extends StateMachine<Indexer.State>{
         FEED_TO_SHOOTER,
         AWAITING_NOTE_FRONT,
         AWAITING_NOTE_BACK,
-        LOST_NOTE,
-        STUCK_NOTE
+        LOST_NOTE
     }
 }

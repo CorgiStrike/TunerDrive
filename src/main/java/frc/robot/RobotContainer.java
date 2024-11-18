@@ -96,7 +96,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     addOmniTransition(State.SOFT_E_STOP);
     addOmniTransition(State.TRAVERSING);
     addOmniTransition(State.LOST_NOTE);
-    addOmniTransition(State.STUCK_NOTE);
     addOmniTransition(State.CLEANSE);
   }
 
@@ -151,7 +150,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         new WaitCommand(4),
         new ConditionalCommand(
           transitionCommand(State.TRAVERSING), 
-          transitionCommand(State.STUCK_NOTE), 
+          transitionCommand(State.LOST_NOTE), 
           () -> indexer.getState() == Indexer.State.IDLE)
       )
     );
@@ -168,19 +167,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         transitionCommand(State.TRAVERSING)
       )
       
-    );
-
-    registerStateCommand(State.STUCK_NOTE, 
-    new SequentialCommandGroup(
-      new ParallelCommandGroup(
-        //set LEDs to an error color
-        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-        intake.transitionCommand(Intake.State.IDLE),
-        indexer.transitionCommand(Indexer.State.IDLE)
-      ),
-      new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE),
-      transitionCommand(State.TRAVERSING)
-    )
     );
   }
 
@@ -206,7 +192,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     AUTO_GROUND_INTAKE,
     GROUND_INTAKE,
     GROUND_EJECT,
-    STUCK_NOTE,
     LOST_NOTE,
     CLEANSE
   }
