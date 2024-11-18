@@ -374,7 +374,7 @@ public static final class PhysicalConstants {
   
         public static final double POSITION_READY_TOLERANCE = 2 * (Math.PI / 180); // RAD
   
-        public static final double BASE_SHOT_POSITION = 55 * (Math.PI / 180); // RAD - originally 59
+        public static final double BASE_SHOT_POSITION = 57 * (Math.PI / 180); // RAD - originally 59
         public static final double AUTO_START_POSITION = 55 * (Math.PI / 180); // RAD
         public static final double AMP_POSITION = 50 * (Math.PI / 180); // RAD
         public static final double FULL_STOW_POSITION = 25 * (Math.PI / 180); // RAD
@@ -432,7 +432,7 @@ public static final class PhysicalConstants {
     }
 
     public static final class Settings {
-      public static final double BASE_SHOT_VELOCITY = 3970 / 60.0; // RPS
+      public static final double BASE_SHOT_VELOCITY = 5000 / 60.0; // RPS
 
       public static final double PARTIAL_SPINUP_VELOCITY = 5520 / 60.0; // RPS
 

@@ -119,6 +119,12 @@ public class Shooter extends StateMachine<Shooter.State> {
         new SequentialCommandGroup(
             flywheel.transitionCommand(Flywheel.State.PASS_THROUGH),
             arm.transitionCommand(Arm.State.PARTIAL_STOW)));
+      
+    registerStateCommand(State.TRAVERSING,
+     new SequentialCommandGroup(
+      partialFlywheelSpinup(),
+      arm.transitionCommand(Arm.State.FULL_STOW)
+     ));
 
     // This is where we do rapid spinup stuff in the auton mode where we blast the flywheels with
     // full power
@@ -192,6 +198,7 @@ public class Shooter extends StateMachine<Shooter.State> {
     addOmniTransition(State.MOVING_SPEAKER_AA);
     addOmniTransition(State.LOB_ACTIVE_ADJUST);
     addOmniTransition(State.TUNE);
+    addOmniTransition(State.TRAVERSING);
 
     addTransition(State.SOFT_E_STOP, State.BOTTOM_FLYWHEEL_VOLTAGE_CALC);
     addTransition(State.SOFT_E_STOP, State.FLYWHEEL_VOLTAGE_CALC);
@@ -305,6 +312,7 @@ public class Shooter extends StateMachine<Shooter.State> {
     MOVING_SPEAKER_AA,
     LOB_ACTIVE_ADJUST,
     TUNE,
+    TRAVERSING,
     // flags
     READY
   }

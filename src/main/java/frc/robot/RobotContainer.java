@@ -57,7 +57,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     TunerConstants.BackRight
   );
 
-  private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
+  private final Telemetry logger = new Telemetry(TunerConstants.speedAt12VoltsMps);
 
   private void configureBindings() {
     drivetrain.configureBindings(controllerBindings::getDriveXValue, controllerBindings::getDriveYValue, controllerBindings::getDriveTurnValue);
@@ -173,8 +173,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
         intake.transitionCommand(Intake.State.IDLE),
         indexer.transitionCommand(Indexer.State.IDLE),
-        shooter.transitionCommand(Shooter.State.STOW),
-        shooter.partialFlywheelSpinup()
+        shooter.transitionCommand(Shooter.State.TRAVERSING)
       ),
       new WaitUntilCommand(() -> indexer.getState() == Indexer.State.LOST_NOTE),
       transitionCommand(State.LOST_NOTE)                                                                                              
