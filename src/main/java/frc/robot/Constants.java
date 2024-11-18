@@ -32,6 +32,14 @@ public final class Constants {
   public static final CurrentLimitsConfigs DEFAULT_CURRENT_LIMIT =
       new CurrentLimitsConfigs().withSupplyCurrentLimit(20).withSupplyCurrentLimitEnable(true);
   
+  public static boolean doubleEqual(double a, double b, double accuracy) {
+    return Math.abs(a - b) < accuracy;
+  }
+
+  public static boolean doubleEqual(double a, double b) {
+    return doubleEqual(a, b, 0.00001);
+  }
+
   public static class Controller {
     public static final int LEFT_FLIGHT_STICK_ID = 0;
     public static final int RIGHT_FLIGHT_STICK_ID = 1;
@@ -155,5 +163,70 @@ public final class Constants {
               new PIDSVGains(0.25, 0, 0, 0.1454, 0.1204);
     }
 
+  }
+
+  public static final class Shooter {
+
+    public static final class Arm{
+
+      public static final class Hardware {
+        public static final int LEADER_ID = 12;
+        public static final int FOLLOWER_ID = 13;
+        public static final int POTENTIOMETER_ID = 0;
+
+        public static final double POTENTIOMETER_RATIO = (10.0 / 58.0) * 10 * 2 * Math.PI;
+        public static final double MOTOR_RATIO =
+          (10.0 / 64.0) * (18.0 / 50.0) * (10.0 / 58.0) * 2 * Math.PI;
+
+        public static final boolean POTENTIOMETER_INVERTED = true;
+        public static final boolean LEADER_INVERTED = true;
+        public static final boolean FOLLOWER_INVERTED = true;
+
+        public static final double POTENTIOMETER_OFFSET = Math.toRadians(336.2) + Math.toRadians(20);
+
+        public static final NeutralModeValue NEUTRAL_MODE = NeutralModeValue.Brake;
+
+        public static final CurrentLimitsConfigs CURRENT_LIMITS_CONFIGS = DEFAULT_CURRENT_LIMIT;
+
+        public static final PIDSVGains GAINS =
+          new PIDSVGains(3, 0, 0, 0.0869, 0.3299);
+      }
+
+      public static final class Settings {
+        public static final double VELOCITY = 100; // RAD/s
+        public static final double ACCELERATION = 150; // RAD/s/s
+        public static final double JERK = 10_000; // RAD/s/s/s
+  
+        public static final double POSITION_READY_TOLERANCE = 2 * (Math.PI / 180); // RAD
+  
+        public static final double BASE_SHOT_POSITION = 55 * (Math.PI / 180); // RAD - originally 59
+        public static final double AUTO_START_POSITION = 55 * (Math.PI / 180); // RAD
+        public static final double AMP_POSITION = 50 * (Math.PI / 180); // RAD
+        public static final double FULL_STOW_POSITION = 20.5 * (Math.PI / 180); // RAD
+        public static final double PARTIAL_STOW_POSITION = 40 * (Math.PI / 180); // RAD
+        public static final double CHUTE_INTAKE_POSITION = 40 * (Math.PI / 180); // RAD
+        public static final double LOB_POSITION_STRAIGHT = 20.1 * (Math.PI / 180);
+  
+        public static final double LOB_POSITION_ARC = 50 * (Math.PI / 180);
+  
+        public static double TRAP_POSITION = 58 * (Math.PI / 180); // RAD
+  
+        public static final double AUTO_SYNC_TOLERANCE = 0.1;
+        public static final double AUTO_SYNC_MAX_VELOCITY = 0.1; // RAD/s
+  
+        public static final boolean ENABLE_AUTO_SYNC = false;
+        public static final double MIN_TIME_BETWEEN_SYNC = 2.0;
+  
+        public static final double VOLTAGE_INCREMENT = 0.125;
+  
+        public static final double MIN_ANGLE = 20.0 * (Math.PI / 180);
+        public static final double MAX_ANGLE = 60.0 * (Math.PI / 180);
+      }
+
+    }
+
+    public static final class Flywheel {
+
+    }
   }
 }
