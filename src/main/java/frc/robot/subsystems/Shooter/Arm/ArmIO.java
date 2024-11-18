@@ -1,10 +1,8 @@
 package frc.robot.subsystems.Shooter.Arm;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface ArmIO {
     
-    @AutoLog
+   
     public class ArmIOInputs {
 
         public double motorPosition = 0.0;

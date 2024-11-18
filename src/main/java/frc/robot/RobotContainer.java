@@ -4,11 +4,14 @@
 
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
@@ -28,6 +31,7 @@ import frc.robot.subsystems.Indexer.IndexerIOReal;
 import frc.robot.subsystems.Shooter.Shooter;
 import frc.robot.subsystems.Shooter.Arm.ArmIOReal;
 import frc.robot.subsystems.Shooter.Flywheel.FlywheelIOReal;
+import frc.robot.util.AllianceManager;
 
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
@@ -38,7 +42,20 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private final Indexer indexer;
   private final Shooter shooter;
 
-  private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
+  BooleanSupplier flipPath = ()->{
+    return AllianceManager.getAlliance() == DriverStation.Alliance.Red;
+  };
+
+  private final CommandSwerveDrivetrain drivetrain = new CommandSwerveDrivetrain(
+    TunerConstants.DrivetrainConstants, 
+    TunerConstants.speedAt12VoltsMps, 
+    Constants.Drivetrain.MAX_ANGULAR_RATE, 
+    flipPath, 
+    TunerConstants.FrontLeft, 
+    TunerConstants.FrontRight, 
+    TunerConstants.BackLeft, 
+    TunerConstants.BackRight
+  );
 
   private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
 

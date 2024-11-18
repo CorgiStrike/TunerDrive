@@ -1,9 +1,7 @@
 package frc.robot.subsystems.Shooter.Flywheel;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface FlywheelIO {
-  @AutoLog
+
   public class FlywheelIOInputs {
     public double velocity = 0.0;
     public double rotorVelocity = 0.0;
