@@ -45,154 +45,42 @@ public class Vision {
     }
 
     public Pose2d getRobotPose() {
-        Optional<EstimatedRobotPose> pose = pvCams[0].getEstimatedGlobalPose(prevPose);
-        Pose3d robotPose = pose.isPresent() ? pose.get().estimatedPose : new Pose3d();
-        prevPose = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(robotPose.getRotation().getZ()));
+        Optional<VisionEstimate> pose = pvCams[0].getEstimate(prevPose);
+        prevPose = pose.isPresent() ? pose.get().estimatedPose : new Pose2d();
         return prevPose;
     }
 
-    private PhotonPipelineResult preProcess(PhotonCamera cam, double ambiguityThreshold, double distanceFromLastEstimateScalar){
-        PhotonPipelineResult pipelineData = cam.getLatestResult();
-        HashMap<Integer, Double[]> ambiguityAverages = new HashMap<>();
-        int avgLength = 100;
-
-        if (!pipelineData.hasTargets()) return pipelineData;
-
-        /* VERY IMPORTANT:
-        * Clamp received vision timestamps to not pass the RIO time
-        * If vision timestamps desync from the RIO, the pose estimate will have huge spasms
-        * Issue for almost all of 2024 season - fixed at Champs 2024
-        */
-        pipelineData.setTimestampSeconds(
-            Math.min(Timer.getFPGATimestamp(), pipelineData.getTimestampSeconds()));
-
-        /*
-        * Log the ambiguity of each tag the camera can see
-        */
-        int idx = 0;
-
-        for (var tag : pipelineData.getTargets()) {
-        if (!ambiguityAverages.containsKey(tag.getFiducialId())) {
-            Double[] arr = new Double[avgLength];
-            Arrays.fill(arr, -1.0);
-            arr[0] = tag.getPoseAmbiguity();
-
-            ambiguityAverages.put(tag.getFiducialId(), arr);
-        } else {
-            var arr = ambiguityAverages.get(tag.getFiducialId());
-            System.arraycopy(arr, 0, arr, 1, arr.length - 1);
-            arr[0] = tag.getPoseAmbiguity();
-        }
-
-        double avg = 0;
-        double count = 0;
-        for (Double a : ambiguityAverages.get(tag.getFiducialId())) {
-            if (a >= 0) {
-            avg += a;
-            count++;
-            }
-        }
-
-        avg /= count;
-
-        PhotonTrackedTarget target =
-            new PhotonTrackedTarget(
-                tag.getYaw(),
-                tag.getPitch(),
-                tag.getArea(),
-                tag.getSkew(),
-                tag.getFiducialId(),
-                tag.getBestCameraToTarget(),
-                tag.getAlternateCameraToTarget(),
-                avg,
-                tag.getMinAreaRectCorners(),
-                tag.getDetectedCorners());
-
-        pipelineData.targets.set(idx, target);
-
-        // Logging the ambiguity for each target can help with debugging potentially problematic
-        // tag views
-        Logger.recordOutput(
-            "Vision/" + cam.getName() + "/target-" + target.getFiducialId() + "-avg-ambiguity",
-            target.getPoseAmbiguity());
-
-        idx++;
-        }
-
-        // Cut out targets with too high ambiguity
-        pipelineData.targets.removeIf(target -> target.getPoseAmbiguity() > ambiguityThreshold);
-
-        return pipelineData;
-    }
-
-    public Matrix<N3, N1> getXYThetaStdDev(EstimatedRobotPose pose, double trustCutOff) {
-        double totalDistance = 0.0;
-        int nonErrorTags = 0;
-        double tagDistanceScalar = 1;
-        double tagDistancePower = 0.33;
-
-        // make the std dev greater based on how far away the tags are (trust estimates from further
-        // tags less)
-        // algorithm from frc6328 - Mechanical Advantage my beloved
-
-        for (var tag : pose.targetsUsed) {
-            var tagOnField = FIELD_LAYOUT.getTagPose(tag.getFiducialId());
-
-            if (tagOnField.isPresent()) {
-                totalDistance +=
-                    pose.estimatedPose
-                        .toPose2d()
-                        .getTranslation()
-                        .getDistance(tagOnField.get().toPose2d().getTranslation());
-                nonErrorTags++;
-            }
-        }
-        double avgDistance = totalDistance / nonErrorTags;
-
-        avgDistance *= tagDistanceScalar;
-
-        double xyStdDev = Math.pow(avgDistance, tagDistancePower) / nonErrorTags;
-        double thetaStdDev = Math.pow(avgDistance, tagDistancePower) / nonErrorTags;
-
-        if (avgDistance >= trustCutOff) {
-            return VecBuilder.fill(10000, 10000, 10000);
-        }
-
-        return VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev);
-    }
-
     public VisionEstimate[] getEstimatedGlobalPose() {
-        VisionEstimate[] estimates = new VisionEstimate[pvCams.length];
-        int i = 0;
-        for(AprilTagCamera cam:pvCams){
-            PhotonPipelineResult raw = preProcess(cam.camera, cam.cam.ambiguityThreshhold, 2.0);
-            var estimate = cam.photonPoseEstimator.update(raw);
-            if(estimate.isPresent()){
-                var estimation = estimate.get();
-                var stdDev = getXYThetaStdDev(estimation, cam.cam.trustCutoff);
-                var pose = new Pose2d(estimation.estimatedPose.getX(), estimation.estimatedPose.getY(), new Rotation2d(estimation.estimatedPose.getRotation().getZ()));
-                VisionEstimate finalEstimate = new VisionEstimate(pose, stdDev, estimation.timestampSeconds);
-                estimates[i] = finalEstimate;
-                feild.setRobotPose(pose);
-            }
-            i++;
-        }
+        VisionEstimate[] estimates = Arrays.stream(pvCams)
+            .map((cam) -> cam.getEstimate(prevPose))
+            .filter((est) -> est.isPresent())
+            .map((est) -> est.get())
+            .toArray(VisionEstimate[]::new);
+
+        updateField2d(estimates);
+
         return estimates;
+    }
+
+    private void updateField2d(VisionEstimate[] estimates) {
+        var obj = feild.getObject("Cam Estimations");
+        obj.setPoses(Arrays.stream(estimates).map((e) -> e.estimatedPose()).toList());
     }
 
     // camera settings - define in Constants
     public record PVCamera(
         String name,
         Pose3d pose,
-        Double ambiguityThreshhold,
-        Double trustCutoff
+        Preprocessor pre,
+        Postprocessor post
     ) {}
 
     // pipeline-specific stuff
     public class AprilTagCamera {
-        public PhotonPoseEstimator photonPoseEstimator;
-        public PhotonCamera camera;
-        public PVCamera cam;
+        PhotonPoseEstimator photonPoseEstimator;
+        PhotonCamera camera;
+        PVCamera cam;
+
         public AprilTagCamera(PVCamera cam) {
             this.cam = cam;
             PhotonCamera camera = new PhotonCamera(cam.name);
@@ -204,10 +92,17 @@ public class Vision {
                 new Transform3d(new Pose3d(), cam.pose));
         }
 
-    public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose) {
-        photonPoseEstimator.setLastPose(prevEstimatedRobotPose);
-        return photonPoseEstimator.update();
-    }
+        public Optional<VisionEstimate> getEstimate(Pose2d lastPose) {
+            photonPoseEstimator.setLastPose(lastPose);
+
+            var est = photonPoseEstimator.update(cam.pre().preprocess(camera.getLatestResult()));
+
+            if (est.isPresent()) {
+                return Optional.of(cam.post().postProcess(est.get()));
+            }
+
+            return Optional.empty();
+        }
     }
 
     public record VisionEstimate(

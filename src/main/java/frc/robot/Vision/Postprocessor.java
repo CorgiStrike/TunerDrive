@@ -1,5 +1,7 @@
 package frc.robot.Vision;
 
-public class Postprocessor {
-    
+import org.photonvision.EstimatedRobotPose;
+
+public interface Postprocessor {
+    Vision.VisionEstimate postProcess(EstimatedRobotPose pose);
 }
