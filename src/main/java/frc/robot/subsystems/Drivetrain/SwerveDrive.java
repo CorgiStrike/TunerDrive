@@ -86,8 +86,10 @@ public class SwerveDrive extends SwerveDrivetrain{
 
     private void updateVisionPose() {
         var estimates = vision.getEstimatedGlobalPose();
-        for (Vision.VisionEstimate estimate:estimates)
-        if(!(estimate==null))this.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
+        for (Vision.VisionEstimate estimate:estimates){
+            if(!(estimates[0]==null)) field.setRobotPose(estimates[0].estimatedPose());
+            if(!(estimate==null)) this.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
+        }
     }
 
     public void periodic() {

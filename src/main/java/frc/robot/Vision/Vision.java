@@ -34,12 +34,6 @@ public class Vision {
         
     }
 
-    public Pose2d getRobotPose() {
-        Optional<VisionEstimate> pose = pvCams[0].getEstimate(prevPose);
-        prevPose = pose.isPresent() ? pose.get().estimatedPose : new Pose2d();
-        return prevPose;
-    }
-
     public VisionEstimate[] getEstimatedGlobalPose() {
         VisionEstimate[] estimates = Arrays.stream(pvCams)
             .map((cam) -> cam.getEstimate(prevPose))
