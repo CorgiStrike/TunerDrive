@@ -42,7 +42,6 @@ public class Vision {
             .toArray(VisionEstimate[]::new);
 
         updateField2d(estimates);
-
         return estimates;
     }
 
@@ -82,7 +81,8 @@ public class Vision {
             var est = photonPoseEstimator.update(cam.pre().preprocess(camera.getLatestResult()));
 
             if (est.isPresent()) {
-                return Optional.of(cam.post().postProcess(est.get()));
+                var estimate = cam.post().postProcess(est.get());
+                return Optional.of(estimate);
             }
 
             return Optional.empty();

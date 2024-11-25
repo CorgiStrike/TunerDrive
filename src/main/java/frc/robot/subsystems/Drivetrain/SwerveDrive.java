@@ -9,7 +9,10 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -31,6 +34,7 @@ public class SwerveDrive extends SwerveDrivetrain{
     private Notifier simNotifier = null;
     private double lastSimTime;
     private Field2d field = new Field2d();
+    private SwerveDrivePoseEstimator odometry;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private final Rotation2d BlueAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
@@ -45,6 +49,7 @@ public class SwerveDrive extends SwerveDrivetrain{
             startSimThread();
         }
         initVision();
+        odometry = new SwerveDrivePoseEstimator(m_kinematics, m_fieldRelativeOffset, m_modulePositions, new Pose2d());
     }
     public SwerveDrive(SwerveDrivetrainConstants driveTrainConstants, SwerveModuleConstants... modules) {
         super(driveTrainConstants, modules);
@@ -52,6 +57,7 @@ public class SwerveDrive extends SwerveDrivetrain{
             startSimThread();
         }
         initVision();
+        odometry = new SwerveDrivePoseEstimator(m_kinematics, m_fieldRelativeOffset, m_modulePositions, new Pose2d());
     }
 
     private void initVision() {
@@ -87,8 +93,9 @@ public class SwerveDrive extends SwerveDrivetrain{
     private void updateVisionPose() {
         var estimates = vision.getEstimatedGlobalPose();
         for (Vision.VisionEstimate estimate:estimates){
-            if(!(estimates[0]==null)) field.setRobotPose(estimates[0].estimatedPose());
-            if(!(estimate==null)) this.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
+            //if(!(estimates[0]==null)) field.setRobotPose(estimates[0].estimatedPose());
+            field.setRobotPose(odometry.getEstimatedPosition());
+            if(!(estimate==null)) odometry.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
         }
     }
 
@@ -107,5 +114,12 @@ public class SwerveDrive extends SwerveDrivetrain{
             });
         }
         updateVisionPose();
+        SwerveModulePosition[] modulePositions = {
+            getModule(0).getPosition(true),
+            getModule(1).getPosition(true),
+            getModule(2).getPosition(true),
+            getModule(3).getPosition(true)
+        };
+        odometry.update(getPigeon2().getRotation2d(),modulePositions);
     }
 }
