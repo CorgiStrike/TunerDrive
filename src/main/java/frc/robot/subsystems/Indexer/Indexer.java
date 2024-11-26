@@ -3,7 +3,6 @@ package frc.robot.subsystems.Indexer;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -64,7 +63,7 @@ public class Indexer extends StateMachine<Indexer.State>{
 
         registerStateCommand(State.AWAITING_NOTE_FRONT, new SequentialCommandGroup(
             new InstantCommand(() -> io.setBeltTargetVelocity(Hardware.humanPlayerIntakeSpeed)),
-            new WaitUntilCommand(() -> notePresent()),
+            new WaitUntilCommand(() -> inputs.prox2Tripped),
             transitionCommand(State.INDEXING)
         ));
 
