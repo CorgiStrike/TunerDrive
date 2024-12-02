@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -219,7 +218,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         shooter.transitionCommand(Shooter.State.BASE_SHOT),
         new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
         indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
-        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
+        new WaitUntilCommand(() -> !indexer.notePresent()),
         transitionCommand(State.TRAVERSING)
       )
     );
