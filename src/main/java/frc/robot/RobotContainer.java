@@ -12,11 +12,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -32,7 +30,6 @@ import frc.robot.subsystems.Indexer.IndexerIOReal;
 import frc.robot.subsystems.Shooter.Shooter;
 import frc.robot.subsystems.Shooter.Arm.ArmIOReal;
 import frc.robot.subsystems.Shooter.Flywheel.FlywheelIOReal;
-import frc.robot.util.AllianceManager;
 
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
@@ -43,16 +40,13 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private final Indexer indexer;
   private final Shooter shooter;
 
-  BooleanSupplier flipPath = ()->{
-    return AllianceManager.getAlliance() == DriverStation.Alliance.Red;
-  };
-
   private final BooleanSupplier flipPath = () ->{var alliance = DriverStation.getAlliance();
     if (alliance.isPresent()) {
         return alliance.get() == DriverStation.Alliance.Red & !DriverStation.isTeleop();
     }
     return false;
   };
+
   private final CommandSwerveDrivetrain drivetrain = new CommandSwerveDrivetrain(
     TunerConstants.DrivetrainConstants, 
     TunerConstants.speedAt12VoltsMps, 
@@ -114,7 +108,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     shooter = new Shooter(
       new ArmIOReal(),
       new FlywheelIOReal(),
-      () -> new Translation2d(0, 0)); //add when we have bot pose
+      () -> drivetrain.getPose().getTranslation()
+    ); //add when we have bot pose
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
