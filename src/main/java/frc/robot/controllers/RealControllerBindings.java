@@ -78,4 +78,9 @@ public class RealControllerBindings implements ControllerBindings {
   public Trigger humanIntake(){
     return gamepad.x();
   }
+
+  @Override
+  public Trigger speakerAA(){
+    return leftFlightStick.trigger();
+  }
 }

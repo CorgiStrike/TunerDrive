@@ -314,6 +314,6 @@ public class Shooter extends StateMachine<Shooter.State> {
     TUNE,
     TRAVERSING,
     // flags
-    READY
+    READY, state
   }
 }

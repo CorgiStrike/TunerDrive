@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -217,12 +218,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
           intake.transitionCommand(Intake.State.IDLE),
           indexer.transitionCommand(Indexer.State.IDLE)
         ),
-        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
-        shooter.transitionCommand(Shooter.State.BASE_SHOT),
-        new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
-        indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
-        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
-        transitionCommand(State.TRAVERSING)
+        waitReady(Shooter.State.BASE_SHOT)
       )
     );
 
@@ -236,6 +232,17 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         ),
         new WaitUntilCommand(()-> indexer.getState() == Indexer.State.HAS_NOTE),
         transitionCommand(State.TRAVERSING)
+      )
+    );
+
+    registerStateCommand(State.SPEAKER_SCORE,
+      new SequentialCommandGroup(
+        new ParallelCommandGroup(
+          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.SPEAKER_AA),
+          intake.transitionCommand(Intake.State.IDLE),
+          indexer.transitionCommand(Indexer.State.IDLE)
+        ),
+        waitReady(Shooter.State.SPEAKER_AA)
       )
     );
   }
@@ -254,6 +261,16 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       .withSize(2,1);
   }
 
+  private Command waitReady(Shooter.State state){
+    return new SequentialCommandGroup(
+      new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
+      shooter.transitionCommand(state),
+      new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
+      indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
+      new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
+      transitionCommand(State.TRAVERSING)
+    );
+  }
   @Override
   protected void determineSelf() {
     setState(State.TRAVERSING);
@@ -279,6 +296,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     LOST_NOTE,
     CLEANSE,
     BASE_SHOT,
-    HUMAN_INTAKE
+    HUMAN_INTAKE,
+    SPEAKER_SCORE
   }
 }

@@ -28,6 +28,8 @@ public interface ControllerBindings {
 
   Trigger humanIntake();
 
+  Trigger speakerAA();
+
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }
