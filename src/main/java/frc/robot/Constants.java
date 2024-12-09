@@ -11,6 +11,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.util.PIDConstants;
 
 import frc.robot.Motors.talonfx.PIDSVGains;
+import frc.robot.Vision.DefaultPostProcessor;
+import frc.robot.Vision.DefaultPreProcessor;
 import frc.robot.Vision.Vision.PVCamera;
 import frc.robot.util.AllianceManager;
 
@@ -160,14 +162,45 @@ public static final class PhysicalConstants {
             Units.inchesToMeters(8.920582),
             new Rotation3d(0, Math.toRadians(-30), Math.toRadians(180 + 45)));
     
+    public static final double LEFT_SHOOTER_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+    public static final double RIGHT_SHOOTER_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+    public static final double LEFT_INTAKE_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+    public static final double RIGHT_INTAKE_CAM_TRUST_CUTOFF = Units.feetToMeters(18);
+
+    public static final int AMBIGUITY_AVG_LENGTH = 100;
+    public static final double DISTANCE_SCALAR = 2;
+    
     public static PVCamera LEFT_SHOOTER_CAM =
-        new PVCamera("pv_instance_1", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+      new PVCamera(
+        "pv_instance_1", 
+        LEFT_SHOOTER_CAM_POSE,
+        new DefaultPreProcessor(AMBIGUITY_THRESHHOLD, DISTANCE_SCALAR, AMBIGUITY_AVG_LENGTH),
+        new DefaultPostProcessor(FIELD_LAYOUT, LEFT_SHOOTER_CAM_TRUST_CUTOFF)
+      );
+
     public static PVCamera RIGHT_SHOOTER_CAM =
-        new PVCamera("pv_instance_4", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+      new PVCamera(
+        "pv_instance_4", 
+        RIGHT_SHOOTER_CAM_POSE,
+        new DefaultPreProcessor(AMBIGUITY_THRESHHOLD, DISTANCE_SCALAR, AMBIGUITY_AVG_LENGTH),
+        new DefaultPostProcessor(FIELD_LAYOUT, RIGHT_SHOOTER_CAM_TRUST_CUTOFF)
+      );
+  
     public static PVCamera LEFT_INTAKE_CAM =
-        new PVCamera("pv_instance_2", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+      new PVCamera(
+        "pv_instance_2", 
+        LEFT_INTAKE_CAM_POSE,
+        new DefaultPreProcessor(AMBIGUITY_THRESHHOLD, DISTANCE_SCALAR, AMBIGUITY_AVG_LENGTH),
+        new DefaultPostProcessor(FIELD_LAYOUT, LEFT_INTAKE_CAM_TRUST_CUTOFF)
+      );
+
     public static PVCamera RIGHT_INTAKE_CAM =
-        new PVCamera("pv_instance_3", LEFT_SHOOTER_CAM_POSE, AMBIGUITY_THRESHHOLD);
+      new PVCamera(
+        "pv_instance_3", 
+        RIGHT_INTAKE_CAM_POSE,
+        new DefaultPreProcessor(AMBIGUITY_THRESHHOLD, DISTANCE_SCALAR, AMBIGUITY_AVG_LENGTH),
+        new DefaultPostProcessor(FIELD_LAYOUT, RIGHT_INTAKE_CAM_TRUST_CUTOFF)
+      );
   }
 
   public static final class Intake {

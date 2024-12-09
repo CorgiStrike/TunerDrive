@@ -9,9 +9,10 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -27,12 +28,13 @@ import frc.robot.Vision.Vision.PVCamera;
  * subsystem so it can be used in command-based projects easily.
  */
 public class SwerveDrive extends SwerveDrivetrain{
-    private static final double kSimLoopPeriod = 0.005; // 5 ms
+    private static final double simLoopPeriod = 0.005; // 5 ms
     private List<PVCamera> camSettings;
     private Vision vision;
-    private Notifier m_simNotifier = null;
-    private double m_lastSimTime;
+    private Notifier simNotifier = null;
+    private double lastSimTime;
     private Field2d field = new Field2d();
+    private SwerveDrivePoseEstimator odometry;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private final Rotation2d BlueAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
@@ -47,6 +49,7 @@ public class SwerveDrive extends SwerveDrivetrain{
             startSimThread();
         }
         initVision();
+        odometry = new SwerveDrivePoseEstimator(m_kinematics, m_fieldRelativeOffset, m_modulePositions, new Pose2d());
     }
     public SwerveDrive(SwerveDrivetrainConstants driveTrainConstants, SwerveModuleConstants... modules) {
         super(driveTrainConstants, modules);
@@ -54,12 +57,13 @@ public class SwerveDrive extends SwerveDrivetrain{
             startSimThread();
         }
         initVision();
+        odometry = new SwerveDrivePoseEstimator(m_kinematics, m_fieldRelativeOffset, m_modulePositions, new Pose2d());
     }
 
     private void initVision() {
         camSettings = List.of(
-            //Constants.Vision.LEFT_SHOOTER_CAM,
-            //Constants.Vision.RIGHT_SHOOTER_CAM,
+            Constants.Vision.LEFT_SHOOTER_CAM,
+            Constants.Vision.RIGHT_SHOOTER_CAM,
             Constants.Vision.LEFT_INTAKE_CAM,
             Constants.Vision.RIGHT_INTAKE_CAM
             );
@@ -72,28 +76,24 @@ public class SwerveDrive extends SwerveDrivetrain{
     }
 
     private void startSimThread() {
-        m_lastSimTime = Utils.getCurrentTimeSeconds();
+        lastSimTime = Utils.getCurrentTimeSeconds();
 
         /* Run simulation at a faster rate so PID gains behave more reasonably */
-        m_simNotifier = new Notifier(() -> {
+        simNotifier = new Notifier(() -> {
             final double currentTime = Utils.getCurrentTimeSeconds();
-            double deltaTime = currentTime - m_lastSimTime;
-            m_lastSimTime = currentTime;
+            double deltaTime = currentTime - lastSimTime;
+            lastSimTime = currentTime;
 
             /* use the measured time delta, get battery voltage from WPILib */
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
-        m_simNotifier.startPeriodic(kSimLoopPeriod);
+        simNotifier.startPeriodic(simLoopPeriod);
     }
 
     private void updateVisionPose() {
-        var pose = vision.getRobotPose();
-        if (pose != null) {
-            Pose3d rawPose = pose.estimatedPose;
-            Pose2d calcPose = new Pose2d(rawPose.getX(),rawPose.getY(),new Rotation2d(rawPose.getRotation().getZ()));
-            field.setRobotPose(calcPose);
-            this.addVisionMeasurement(calcPose, pose.timestampSeconds);
-        
+        var estimates = vision.getEstimatedGlobalPose();
+        for (Vision.VisionEstimate estimate:estimates){
+            if(!(estimate==null)) odometry.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
         }
     }
 
@@ -112,5 +112,7 @@ public class SwerveDrive extends SwerveDrivetrain{
             });
         }
         updateVisionPose();
+        odometry.update(getPigeon2().getRotation2d(),m_modulePositions);
+        field.setRobotPose(odometry.getEstimatedPosition());
     }
 }

@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
@@ -46,6 +47,12 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     return AllianceManager.getAlliance() == DriverStation.Alliance.Red;
   };
 
+  private final BooleanSupplier flipPath = () ->{var alliance = DriverStation.getAlliance();
+    if (alliance.isPresent()) {
+        return alliance.get() == DriverStation.Alliance.Red & !DriverStation.isTeleop();
+    }
+    return false;
+  };
   private final CommandSwerveDrivetrain drivetrain = new CommandSwerveDrivetrain(
     TunerConstants.DrivetrainConstants, 
     TunerConstants.speedAt12VoltsMps, 
@@ -137,7 +144,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   }
 
   private void registerStateCommands() {
-   registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
+    registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
       intake.transitionCommand(Intake.State.IDLE),
       indexer.transitionCommand(Indexer.State.SOFT_E_STOP),

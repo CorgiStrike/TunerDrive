@@ -30,7 +30,7 @@ import frc.robot.Vision.Limelight;
 public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrain.State>{
     public final SwerveDrive swerveDrive;
     private final Limelight limelight = new Limelight("limelight"); 
-    private final PIDController anglePID = new PIDController(0.01, 0.0, 0.0);
+    private final PIDController anglePID = new PIDController(0.1, 0.0, 0.0);
     private double maxSpeed = 0.0, maxAngularRate = 0.0;
     private Supplier<Double> xSupplier = null, ySupplier = null, turnSupplier = null;
     private final SwerveModuleConstants[] modules;
@@ -175,6 +175,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         if (Math.abs(tx)<8||ta<5) {
             drive = -0.4;
         }
+      
         turn = anglePID.calculate(tx);
 
         if(ta == 0){
