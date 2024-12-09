@@ -175,8 +175,8 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         if (Math.abs(tx)<8||ta<5) {
             drive = -0.4;
         }
-        if(tx > 20) turn = -tx/100;
-        else turn = -tx/80;
+      
+        turn = anglePID.calculate(tx);
 
         if(ta == 0){
             drive = 0.0;
