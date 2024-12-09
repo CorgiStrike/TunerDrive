@@ -65,7 +65,7 @@ private static final double coupleRatio = 3.5714285714285716;
 
 private static final double driveGearRatio = 6.122448979591837;
 private static final double steerGearRatio = 21.428571428571427;
-private static final double wheelRadiusInches = 4;
+private static final double wheelRadiusInches = 2;
 
 private static final boolean invertLeftSide = false;
 private static final boolean invertRightSide = true;

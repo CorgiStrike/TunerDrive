@@ -93,8 +93,6 @@ public class SwerveDrive extends SwerveDrivetrain{
     private void updateVisionPose() {
         var estimates = vision.getEstimatedGlobalPose();
         for (Vision.VisionEstimate estimate:estimates){
-            //if(!(estimates[0]==null)) field.setRobotPose(estimates[0].estimatedPose());
-            field.setRobotPose(odometry.getEstimatedPosition());
             if(!(estimate==null)) odometry.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
         }
     }
@@ -114,12 +112,7 @@ public class SwerveDrive extends SwerveDrivetrain{
             });
         }
         updateVisionPose();
-        SwerveModulePosition[] modulePositions = {
-            getModule(0).getPosition(true),
-            getModule(1).getPosition(true),
-            getModule(2).getPosition(true),
-            getModule(3).getPosition(true)
-        };
-        odometry.update(getPigeon2().getRotation2d(),modulePositions);
+        odometry.update(getPigeon2().getRotation2d(),m_modulePositions);
+        field.setRobotPose(odometry.getEstimatedPosition());
     }
 }
