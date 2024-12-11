@@ -83,4 +83,9 @@ public class RealControllerBindings implements ControllerBindings {
   public Trigger speakerAA(){
     return leftFlightStick.trigger();
   }
+
+  @Override
+  public Trigger lobAA(){
+    return gamepad.leftTrigger();
+  }
 }

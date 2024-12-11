@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -291,6 +292,11 @@ public class Shooter extends StateMachine<Shooter.State> {
   protected void determineSelf() {
     // await instructions from rc
     setState(State.SOFT_E_STOP);
+  }
+
+  @Override
+  protected void update(){
+    new PrintCommand(getState().name()).schedule();
   }
 
   public enum State {

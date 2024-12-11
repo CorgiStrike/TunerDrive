@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -94,6 +95,14 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     controllerBindings.humanIntake()
     .onTrue(transitionCommand(State.HUMAN_INTAKE));
 
+    controllerBindings.speakerAA()
+    .onTrue(transitionCommand(State.SPEAKER_SCORE))
+    .onFalse(transitionCommand(State.TRAVERSING));
+
+    controllerBindings.lobAA()
+    .onTrue(transitionCommand(State.LOB_AA))
+    .onFalse(transitionCommand(State.TRAVERSING));
+
     if (Utils.isSimulation()) {
       drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -130,6 +139,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     addTransition(State.TRAVERSING, State.GROUND_INTAKE);
     addTransition(State.TRAVERSING, State.GROUND_EJECT);
     addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
+    addTransition(State.TRAVERSING, State.SPEAKER_SCORE);
+    addTransition(State.TRAVERSING, State.LOB_AA);
     addOmniTransition(State.BASE_SHOT);
     addOmniTransition(State.HUMAN_INTAKE);
 
@@ -225,7 +236,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     registerStateCommand(State.HUMAN_INTAKE,
       new SequentialCommandGroup(
         new ParallelCommandGroup(
-          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING), //maybe change eventually to point towards
+          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.SOURCE), //maybe change eventually to point towards
           indexer.transitionCommand(Indexer.State.AWAITING_NOTE_FRONT),
           shooter.transitionCommand(Shooter.State.CHUTE_INTAKE),
           intake.transitionCommand(Intake.State.IDLE)
@@ -238,11 +249,32 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     registerStateCommand(State.SPEAKER_SCORE,
       new SequentialCommandGroup(
         new ParallelCommandGroup(
-          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.SPEAKER_AA),
+          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
           intake.transitionCommand(Intake.State.IDLE),
           indexer.transitionCommand(Indexer.State.IDLE)
         ),
-        waitReady(Shooter.State.SPEAKER_AA)
+        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
+      shooter.transitionCommand(Shooter.State.SPEAKER_AA),
+      new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
+      indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
+      new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
+      transitionCommand(State.TRAVERSING)
+      )
+    );
+
+    registerStateCommand(State.LOB_AA,
+      new SequentialCommandGroup(
+        new ParallelCommandGroup(
+          drivetrain.transitionCommand(CommandSwerveDrivetrain.State.LOB_AA),
+          intake.transitionCommand(Intake.State.IDLE),
+          indexer.transitionCommand(Indexer.State.IDLE)
+        ),
+        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
+        shooter.transitionCommand(Shooter.State.LOB_ACTIVE_ADJUST),
+        new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
+        indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
+        new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
+        transitionCommand(State.TRAVERSING)
       )
     );
   }
@@ -263,14 +295,10 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   private Command waitReady(Shooter.State state){
     return new SequentialCommandGroup(
-      new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
-      shooter.transitionCommand(state),
-      new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
-      indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
-      new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
-      transitionCommand(State.TRAVERSING)
+      
     );
   }
+
   @Override
   protected void determineSelf() {
     setState(State.TRAVERSING);
@@ -297,6 +325,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     CLEANSE,
     BASE_SHOT,
     HUMAN_INTAKE,
-    SPEAKER_SCORE
+    SPEAKER_SCORE,
+    LOB_AA
   }
 }

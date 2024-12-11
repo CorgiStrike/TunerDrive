@@ -30,6 +30,8 @@ public interface ControllerBindings {
 
   Trigger speakerAA();
 
+  Trigger lobAA();
+
   default Trigger resetVisionPose() {
     return new Trigger(() -> false);
   }
