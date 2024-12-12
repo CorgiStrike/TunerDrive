@@ -32,6 +32,7 @@ import frc.robot.subsystems.Indexer.IndexerIOReal;
 import frc.robot.subsystems.Shooter.Shooter;
 import frc.robot.subsystems.Shooter.Arm.ArmIOReal;
 import frc.robot.subsystems.Shooter.Flywheel.FlywheelIOReal;
+import frc.robot.util.AutoManager;
 
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
@@ -61,6 +62,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   );
 
   private final Telemetry logger = new Telemetry(TunerConstants.speedAt12VoltsMps);
+
+  private final AutoManager autoManager = new AutoManager();
 
   private void configureBindings() {
     drivetrain.configureBindings(controllerBindings::getDriveXValue, controllerBindings::getDriveYValue, controllerBindings::getDriveTurnValue);
@@ -119,7 +122,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       new ArmIOReal(),
       new FlywheelIOReal(),
       () -> drivetrain.getPose().getTranslation()
-    ); //add when we have bot pose
+    );
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
@@ -307,6 +310,12 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   @Override
   protected void onTeleopStart() {
     requestTransition(State.TRAVERSING);
+  }
+
+  @Override
+  protected void onAutonomousStart() {
+    new PrintCommand("auto").schedule();
+    autoManager.getSelectedCommand().schedule();
   }
 
   @Override

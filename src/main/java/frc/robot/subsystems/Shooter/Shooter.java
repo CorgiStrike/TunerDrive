@@ -133,18 +133,11 @@ public class Shooter extends StateMachine<Shooter.State> {
     registerStateCommand(
         State.SPEAKER_AA,
         new ParallelCommandGroup(
-            new ConditionalCommand(
-                flywheel.transitionCommand(Flywheel.State.SPEAKER_ACTIVE_ADJUST_SPIN),
-                new SequentialCommandGroup(
-                    disableRapidSpinup(),
-                    flywheel.transitionCommand(Flywheel.State.FULL_POWER),
-                    new WaitUntilCommand(
-                            () -> flywheel.getCurrentTopSpeed() >= .90 * BASE_SHOT_VELOCITY)
-                        .withTimeout(3),
-                    flywheel.transitionCommand(Flywheel.State.SPEAKER_ACTIVE_ADJUST_SPIN)),
-                () -> !doRapidSpinup),
+            flywheel.transitionCommand(Flywheel.State.SPEAKER_ACTIVE_ADJUST_SPIN),
             arm.transitionCommand(Arm.State.SHOT_ACTIVE_ADJUST),
-            watchReadyCommand()));
+            watchReadyCommand()
+            )
+          );
 
     registerStateCommand(
         State.LOB_ACTIVE_ADJUST,
@@ -296,7 +289,7 @@ public class Shooter extends StateMachine<Shooter.State> {
 
   @Override
   protected void update(){
-    new PrintCommand(getState().name()).schedule();
+    //new PrintCommand(getState().name()).schedule();
   }
 
   public enum State {
