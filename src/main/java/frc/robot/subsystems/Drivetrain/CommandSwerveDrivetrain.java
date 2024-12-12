@@ -113,6 +113,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
 
     private void registerStateTransitions() {
         addOmniTransition(State.AUTO_INTAKE);
+        addOmniTransition(State.FOLLOWING_AUTONOMOUS_COMMAND);
         addOmniTransition(State.IDLE);
         addOmniTransition(State.TRAVERSING);
         addOmniTransition(State.AMP);
@@ -149,6 +150,10 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         registerStateCommand(State.LOB_AA, new RunCommand(() -> {
             pointTowardsAngle(0.0);
         }));
+    }
+
+    public void setAutoCommand(Command command) {
+        registerStateCommand(State.FOLLOWING_AUTONOMOUS_COMMAND, command);
     }
 
     private void configurePathPlanner() {
@@ -203,6 +208,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
 
     public enum State {
         UNDETERMINED,
+        FOLLOWING_AUTONOMOUS_COMMAND,
         IDLE,
         TRAVERSING,
         AUTO_INTAKE,

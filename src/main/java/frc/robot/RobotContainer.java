@@ -7,6 +7,7 @@ package frc.robot;
 import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.Utils;
+import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -41,7 +43,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   //initialize subsystems
   private final Intake intake;
   private final Indexer indexer;
-  private final Shooter shooter;
+  //private final Shooter shooter;
 
   private final BooleanSupplier flipPath = () ->{var alliance = DriverStation.getAlliance();
     if (alliance.isPresent()) {
@@ -118,17 +120,17 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     //define subsystems
     intake = new Intake(new IntakeIOReal());
     indexer = new Indexer(new IndexerIOReal());
-    shooter = new Shooter(
+    /*shooter = new Shooter(
       new ArmIOReal(),
       new FlywheelIOReal(),
       () -> drivetrain.getPose().getTranslation()
-    );
+    );*/
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
     addChildSubsystem(intake);
     addChildSubsystem(indexer);
-    addChildSubsystem(shooter);
+    //addChildSubsystem(shooter);
 
     configureBindings();
     registerStateTransitions();
@@ -151,15 +153,18 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     addOmniTransition(State.TRAVERSING);
     addOmniTransition(State.LOST_NOTE);
     addOmniTransition(State.CLEANSE);
+    addOmniTransition(State.AUTONOMOUS);
   }
 
   private void registerStateCommands() {
     registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
       intake.transitionCommand(Intake.State.IDLE),
-      indexer.transitionCommand(Indexer.State.SOFT_E_STOP),
-      shooter.transitionCommand(Shooter.State.SOFT_E_STOP)
+      indexer.transitionCommand(Indexer.State.SOFT_E_STOP)
+      //shooter.transitionCommand(Shooter.State.SOFT_E_STOP)
     ));
+
+    registerStateCommand(State.AUTONOMOUS, new PrintCommand("AUTO PLSS"));
 
     registerStateCommand(State.GROUND_INTAKE, new SequentialCommandGroup(
       new ParallelCommandGroup(
@@ -189,8 +194,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
       new ParallelCommandGroup(
         drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
         intake.transitionCommand(Intake.State.IDLE),
-        indexer.transitionCommand(Indexer.State.IDLE),
-        shooter.transitionCommand(Shooter.State.TRAVERSING)
+        indexer.transitionCommand(Indexer.State.IDLE)
+        //shooter.transitionCommand(Shooter.State.TRAVERSING)
       ),
       new WaitUntilCommand(() -> indexer.getState() == Indexer.State.LOST_NOTE),
       transitionCommand(State.LOST_NOTE)                                                                                              
@@ -201,8 +206,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         new ParallelCommandGroup(
           drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
           intake.transitionCommand(Intake.State.IDLE),
-          indexer.transitionCommand(Indexer.State.PASS_THROUGH),
-          shooter.transitionCommand(Shooter.State.PASS_THROUGH)
+          indexer.transitionCommand(Indexer.State.PASS_THROUGH)
+          //shooter.transitionCommand(Shooter.State.PASS_THROUGH)
         ),
         new WaitCommand(4),
         new ConditionalCommand(
@@ -241,7 +246,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
         new ParallelCommandGroup(
           drivetrain.transitionCommand(CommandSwerveDrivetrain.State.SOURCE), //maybe change eventually to point towards
           indexer.transitionCommand(Indexer.State.AWAITING_NOTE_FRONT),
-          shooter.transitionCommand(Shooter.State.CHUTE_INTAKE),
+          //shooter.transitionCommand(Shooter.State.CHUTE_INTAKE),
           intake.transitionCommand(Intake.State.IDLE)
         ),
         new WaitUntilCommand(()-> indexer.getState() == Indexer.State.HAS_NOTE),
@@ -257,8 +262,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
           indexer.transitionCommand(Indexer.State.IDLE)
         ),
         new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
-      shooter.transitionCommand(Shooter.State.SPEAKER_AA),
-      new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
+      //shooter.transitionCommand(Shooter.State.SPEAKER_AA),
+      //new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
       indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
       new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
       transitionCommand(State.TRAVERSING)
@@ -273,8 +278,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
           indexer.transitionCommand(Indexer.State.IDLE)
         ),
         new WaitUntilCommand(() -> indexer.getState() == Indexer.State.HAS_NOTE),
-        shooter.transitionCommand(Shooter.State.LOB_ACTIVE_ADJUST),
-        new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
+        //shooter.transitionCommand(Shooter.State.LOB_ACTIVE_ADJUST),
+        //new WaitUntilCommand(() -> feedToShooter() && shooter.isFlag(Shooter.State.READY)),
         indexer.transitionCommand(Indexer.State.FEED_TO_SHOOTER),
         new WaitUntilCommand(() -> indexer.getState() == Indexer.State.IDLE || indexer.getState() == Indexer.State.LOST_NOTE),
         transitionCommand(State.TRAVERSING)
@@ -314,8 +319,8 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   @Override
   protected void onAutonomousStart() {
-    new PrintCommand("auto").schedule();
-    autoManager.getSelectedCommand().schedule();
+    drivetrain.setAutoCommand(autoManager.getSelectedCommand());
+    drivetrain.requestTransition(CommandSwerveDrivetrain.State.FOLLOWING_AUTONOMOUS_COMMAND);
   }
 
   @Override
@@ -325,6 +330,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   public enum State {
     UNDETERMINED,
+    AUTONOMOUS,
     SOFT_E_STOP,
     TRAVERSING,
     AUTO_GROUND_INTAKE,
