@@ -5,10 +5,9 @@
 package frc.robot;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import com.pathplanner.lib.config.RobotConfig;
 
-import frc.robot.Motors.talonfx.PIDSVGains;
 import frc.robot.Vision.DefaultPostProcessor;
 import frc.robot.Vision.DefaultPreProcessor;
 import frc.robot.Vision.Vision.PVCamera;
@@ -65,7 +64,7 @@ public final class Constants {
     static {
       try {
         FIELD_LAYOUT =
-            AprilTagFieldLayout.loadFromResource(AprilTagFields.k2024Crescendo.m_resourceFile);
+            AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile);
       } catch (Exception e) {
         throw new RuntimeException("Could not load AprilTag field layout from WPI");
       }
@@ -138,59 +137,5 @@ public final class Constants {
         new DefaultPreProcessor(AMBIGUITY_THRESHHOLD, DISTANCE_SCALAR, AMBIGUITY_AVG_LENGTH),
         new DefaultPostProcessor(FIELD_LAYOUT, RIGHT_INTAKE_CAM_TRUST_CUTOFF)
       );
-  }
-
-  public static final class Intake {
-    public static final class Hardware {
-
-    public static final int TOP_ID = 30;
-    public static final int BOTTOM_ID = 31;
-    public static final int PROX_ID = 0;
-
-    public static final int topRatio = 1;
-    public static final int bottomRatio = 1;
-
-    public static final boolean TOP_INVERTED = false;
-    public static final boolean BOTTOM_INVERTED = false;
-
-    public static final double BELT_SPEED = 3000 / 60.0; // rps
-
-    public static CurrentLimitsConfigs CURRENT_LIMIT = DEFAULT_CURRENT_LIMIT;
-    public static final NeutralModeValue NEUTRAL_MODE = NeutralModeValue.Coast;
-
-
-    public static final PIDSVGains TOP_GAINS =
-          new PIDSVGains(0.5, 0, 0, 0.2469, 0.1237);
-    }
-  }
-
-  public static final class Indexer {
-
-    public static final class Hardware {
-
-      public static final int indexerID = 50;
-
-      public static final double indexerRatio = 1;
-
-      public static final boolean indexerInverted = false;
-
-      public static final double indexingSpeed = 1000 / 60.0; // rps
-      public static final double passThroughSpeed = 2000 / 60.0; // rps
-      public static final double feedSpeed = 50.0;
-      public static final double humanPlayerIntakeSpeed = 1000 / 60.0; // rps
-      public static final double ringBackSpeed = -500 / 60.0; // rps
-
-      public static final int prox1ID = 1;
-      public static final int prox2ID = 3;
-      public static final int prox3ID = 2;
-
-      public static final CurrentLimitsConfigs currentLimit = DEFAULT_CURRENT_LIMIT;
-
-      public static final NeutralModeValue neutralMode = NeutralModeValue.Coast;
-
-      public static final PIDSVGains indexerGains =
-              new PIDSVGains(0.25, 0, 0, 0.1454, 0.1204);
-    }
-
   }
 }

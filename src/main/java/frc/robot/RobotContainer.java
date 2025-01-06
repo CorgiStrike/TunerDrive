@@ -20,19 +20,12 @@ import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Intake.Intake;
-import frc.robot.subsystems.Intake.IntakeIOReal;
-import frc.robot.subsystems.Indexer.Indexer;
-import frc.robot.subsystems.Indexer.IndexerIOReal;
 
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
 
   //initialize subsystems
-  private final Intake intake;
-  private final Indexer indexer;
-
   private final BooleanSupplier flipPath = () ->{var alliance = DriverStation.getAlliance();
     if (alliance.isPresent()) {
         return alliance.get() == DriverStation.Alliance.Red & !DriverStation.isTeleop();
@@ -59,32 +52,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     // reset the field-centric heading on left bumper press
     controllerBindings.resetGyro().onTrue(drivetrain.runOnce(() -> drivetrain.swerveDrive.seedFieldRelative()));
 
-    //ground intake on A button
-    controllerBindings.manualIntake()
-    .onTrue(transitionCommand(State.GROUND_INTAKE, false))
-    .onFalse(
-            new ConditionalCommand(
-                transitionCommand(State.TRAVERSING, false),
-                Commands.none(),
-                () -> getState() == State.GROUND_INTAKE));
-
-    controllerBindings.autoIntake()
-    .onTrue(transitionCommand(State.AUTO_GROUND_INTAKE, false))
-    .onFalse(
-            new ConditionalCommand(
-                transitionCommand(State.TRAVERSING, false),
-                Commands.none(),
-                () -> getState() == State.AUTO_GROUND_INTAKE));
-
-    //ground eject on B button
-    controllerBindings.intakeEject()
-    .onTrue(transitionCommand(State.GROUND_EJECT, false))
-    .onFalse(
-      new ConditionalCommand(
-          transitionCommand(State.TRAVERSING, false),
-          Commands.none(),
-          () -> getState() == State.GROUND_EJECT));
-
     if (Utils.isSimulation()) {
       drivetrain.swerveDrive.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -93,15 +60,9 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
 
   public RobotContainer() {
     super("RobotContainer", State.UNDETERMINED, State.class);
-    
-    //define subsystems
-    intake = new Intake(new IntakeIOReal());
-    indexer = new Indexer(new IndexerIOReal());
 
     // Add SMF Children
     addChildSubsystem(drivetrain);
-    addChildSubsystem(intake);
-    addChildSubsystem(indexer);
 
     configureBindings();
     registerStateTransitions();
@@ -109,49 +70,17 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   }
 
   private void registerStateTransitions() {
-    addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
-    addTransition(State.TRAVERSING, State.GROUND_INTAKE);
-    addTransition(State.TRAVERSING, State.GROUND_EJECT);
-    addTransition(State.TRAVERSING, State.AUTO_GROUND_INTAKE);
-
     addOmniTransition(State.SOFT_E_STOP);
     addOmniTransition(State.TRAVERSING);
   }
 
   private void registerStateCommands() {
     registerStateCommand(State.SOFT_E_STOP, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE),
-      intake.transitionCommand(Intake.State.IDLE),
-      indexer.transitionCommand(Indexer.State.SOFT_E_STOP)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.IDLE)
     ));
 
-    registerStateCommand(State.GROUND_INTAKE, new SequentialCommandGroup(
-      new ParallelCommandGroup(
-        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-        intake.transitionCommand(Intake.State.INTAKING),
-        indexer.transitionCommand(Indexer.State.INDEXING)
-      ),
-      indexer.waitForState(Indexer.State.HAS_NOTE),
-      transitionCommand(State.TRAVERSING)));
-    
-    registerStateCommand(State.AUTO_GROUND_INTAKE, new SequentialCommandGroup(
-      new ParallelCommandGroup(
-        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.AUTO_INTAKE),
-        intake.transitionCommand(Intake.State.INTAKING),
-        indexer.transitionCommand(Indexer.State.INDEXING)),
-      indexer.waitForState(Indexer.State.HAS_NOTE),
-      transitionCommand(State.TRAVERSING)));
-
-    registerStateCommand(State.GROUND_EJECT, new ParallelCommandGroup(
-        drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-        intake.transitionCommand(Intake.State.EJECTING),
-        indexer.transitionCommand(Indexer.State.IDLE)
-      ));
-    
     registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
-      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING),
-      intake.transitionCommand(Intake.State.IDLE),
-      indexer.transitionCommand(Indexer.State.IDLE)
+      drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)
     ));
   }
 
@@ -173,9 +102,6 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   public enum State {
     UNDETERMINED,
     SOFT_E_STOP,
-    TRAVERSING,
-    AUTO_GROUND_INTAKE,
-    GROUND_INTAKE,
-    GROUND_EJECT
+    TRAVERSING
   }
 }
