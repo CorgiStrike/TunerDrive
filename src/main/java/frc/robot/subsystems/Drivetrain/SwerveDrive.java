@@ -9,7 +9,9 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -19,6 +21,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.Constants;
 import frc.robot.Vision.Vision;
 import frc.robot.Vision.Vision.PVCamera;
+import frc.robot.generated.TunerConstants;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements
@@ -31,6 +34,7 @@ public class SwerveDrive extends SwerveDrivetrain{
     private Notifier simNotifier = null;
     private double lastSimTime;
     private Field2d field = new Field2d();
+    private SwerveDrivePoseEstimator odometry;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private final Rotation2d BlueAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
@@ -88,7 +92,7 @@ public class SwerveDrive extends SwerveDrivetrain{
         var estimates = vision.getEstimatedGlobalPose();
         for (Vision.VisionEstimate estimate:estimates){
             if(!(estimates[0]==null)) field.setRobotPose(estimates[0].estimatedPose());
-            if(!(estimate==null)) this.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
+            if(!(estimate==null)) odometry.addVisionMeasurement(estimate.estimatedPose(),estimate.timestamp(), estimate.stdDevs());
         }
     }
 
@@ -106,6 +110,21 @@ public class SwerveDrive extends SwerveDrivetrain{
                 hasAppliedOperatorPerspective = true;
             });
         }
+        SwerveModulePosition[] modulePositions = new SwerveModulePosition[m_moduleStates.length];
+        SwerveModulePosition mod = new SwerveModulePosition(
+            getModule(0)
+            .getDriveMotor()
+            .getPosition()
+            .getValue()
+            * TunerConstants.FrontLeft.DriveMotorGearRatio
+            * 2*(TunerConstants.FrontLeft.WheelRadius)
+            * Math.PI,
+            new Rotation2d(
+                getModule(0)
+                .getSteerMotor()
+                .getPosition()
+                .getValue()));
+        odometry.update(getState().Pose.getRotation(), modulePositions);
         updateVisionPose();
     }
 }
