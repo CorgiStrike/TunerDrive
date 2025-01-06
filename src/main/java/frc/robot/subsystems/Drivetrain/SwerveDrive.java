@@ -1,17 +1,20 @@
 package frc.robot.subsystems.Drivetrain;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import java.util.List;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveDrivetrain;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveDrivetrainConstants;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModuleConstants;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest;
 
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -27,7 +30,8 @@ import frc.robot.generated.TunerConstants;
  * Class that extends the Phoenix SwerveDrivetrain class and implements
  * subsystem so it can be used in command-based projects easily.
  */
-public class SwerveDrive extends SwerveDrivetrain{
+public class SwerveDrive extends LegacySwerveDrivetrain{
+    Angle test;
     private static final double simLoopPeriod = 0.005; // 5 ms
     private List<PVCamera> camSettings;
     private Vision vision;
@@ -43,14 +47,14 @@ public class SwerveDrive extends SwerveDrivetrain{
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean hasAppliedOperatorPerspective = false;
 
-    public SwerveDrive(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
+    public SwerveDrive(LegacySwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, LegacySwerveModuleConstants... modules) {
         super(driveTrainConstants, OdometryUpdateFrequency, modules);
         if (Utils.isSimulation()) {
             startSimThread();
         }
         initVision();
     }
-    public SwerveDrive(SwerveDrivetrainConstants driveTrainConstants, SwerveModuleConstants... modules) {
+    public SwerveDrive(LegacySwerveDrivetrainConstants driveTrainConstants, LegacySwerveModuleConstants... modules) {
         super(driveTrainConstants, modules);
         if (Utils.isSimulation()) {
             startSimThread();
@@ -69,7 +73,7 @@ public class SwerveDrive extends SwerveDrivetrain{
         SmartDashboard.putData("Vision Pose", field);
     }
 
-    public Runnable getRequestRunnable(Supplier<SwerveRequest> requestSupplier) {
+    public Runnable getRequestRunnable(Supplier<LegacySwerveRequest> requestSupplier) {
         return () -> this.setControl(requestSupplier.get());
     }
 
@@ -116,6 +120,7 @@ public class SwerveDrive extends SwerveDrivetrain{
             .getDriveMotor()
             .getPosition()
             .getValue()
+            .in(Degrees)
             * TunerConstants.FrontLeft.DriveMotorGearRatio
             * 2*(TunerConstants.FrontLeft.WheelRadius)
             * Math.PI,

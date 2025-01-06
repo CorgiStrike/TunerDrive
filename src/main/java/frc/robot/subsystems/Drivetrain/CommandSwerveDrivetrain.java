@@ -3,19 +3,21 @@ package frc.robot.subsystems.Drivetrain;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveDrivetrainConstants;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModule.DriveRequestType;
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
-import com.pathplanner.lib.util.ReplanningConfig;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModuleConstants;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -33,10 +35,10 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
     private final PIDController anglePID = new PIDController(0.1, 0.0, 0.0);
     private double maxSpeed = 0.0, maxAngularRate = 0.0;
     private Supplier<Double> xSupplier = null, ySupplier = null, turnSupplier = null;
-    private final SwerveModuleConstants[] modules;
+    private final LegacySwerveModuleConstants[] modules;
     private final BooleanSupplier mirrorPath;
 
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, double maxSpeed, double maxAngularRate, BooleanSupplier mirrorPath, SwerveModuleConstants... modules) {
+    public CommandSwerveDrivetrain(LegacySwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, double maxSpeed, double maxAngularRate, BooleanSupplier mirrorPath, LegacySwerveModuleConstants... modules) {
         super("CommandSwerveDrive", State.UNDETERMINED, State.class);
         swerveDrive = new SwerveDrive(driveTrainConstants, OdometryUpdateFrequency, modules);
         this.modules = modules;
@@ -47,7 +49,7 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         registerStateCommands();
         configurePathPlanner();
     }
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double maxSpeed, double maxAngularRate, BooleanSupplier mirrorPath, SwerveModuleConstants... modules) {
+    public CommandSwerveDrivetrain(LegacySwerveDrivetrainConstants driveTrainConstants, double maxSpeed, double maxAngularRate, BooleanSupplier mirrorPath, LegacySwerveModuleConstants... modules) {
         super("RobotContainer", State.UNDETERMINED, State.class);
         swerveDrive = new SwerveDrive(driveTrainConstants, modules);
         this.modules = modules;
@@ -59,20 +61,20 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
         configurePathPlanner();
     }
 
-    public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
+    public Command applyRequest(Supplier<LegacySwerveRequest> requestSupplier) {
         return run(swerveDrive.getRequestRunnable(requestSupplier));
     }
 
     private void drive(Double maxSpeed, Double maxAngularRate, Double xValue, Double yValue, Double turnValue, Boolean fieldOriented) {
         if (fieldOriented) {
-            final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+            final LegacySwerveRequest.FieldCentric drive = new LegacySwerveRequest.FieldCentric()
                 .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
                 .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // field-centric driving in open loop
             applyRequest(()->drive.withVelocityX(xValue * maxSpeed).withVelocityY(yValue * maxSpeed).withRotationalRate(turnValue * maxAngularRate)).schedule();
         }
 
         else {
-            final SwerveRequest.RobotCentric drive = new SwerveRequest.RobotCentric()
+            final LegacySwerveRequest.RobotCentric drive = new LegacySwerveRequest.RobotCentric()
                 .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
                 .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // field-centric driving in open loop
             applyRequest(()->drive.withVelocityX(xValue * maxSpeed).withVelocityY(yValue * maxSpeed).withRotationalRate(turnValue * maxAngularRate)).schedule();
@@ -147,22 +149,29 @@ public class CommandSwerveDrivetrain extends StateMachine<CommandSwerveDrivetrai
     }
 
     private void configurePathPlanner() {
-        final Double driveBaseRadius = Math.hypot(modules[0].LocationX, modules[0].LocationY);
-        
-        AutoBuilder.configureHolonomic(
-            this::getPose,
-            swerveDrive::seedFieldRelative,
-            this::getChassisSpeeds,
-            this::driveChassisSpeeds,
-            new HolonomicPathFollowerConfig(
-                AutoConstants.TRANSLATION_PID, 
-                AutoConstants.ANGLE_PID, 
-                maxSpeed, 
-                driveBaseRadius, 
-                new ReplanningConfig()),
-            mirrorPath,
-            this
-        );
+        AutoBuilder.configure(
+            this::getPose, // Robot pose supplier
+            swerveDrive::seedFieldRelative, // Method to reset odometry (will be called if your auto has a starting pose)
+            this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> driveChassisSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
+                    new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            ),
+            AutoConstants.config, // The robot configuration
+            () -> {
+              // Boolean supplier that controls when the path will be mirrored for the red alliance
+              // This will flip the path being followed to the red side of the field.
+              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+              var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+              return false;
+            },
+            this // Reference to this subsystem to set requirements
+    );
     }
 
     private void autoIntakeDrive() {

@@ -1,5 +1,6 @@
 package frc.robot.Motors.talonfx;
 
+
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -7,6 +8,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.Units;
 
 public class EnhancedTalonFX extends TalonFX {
   private final double inputToOutputRatio;
@@ -61,7 +63,7 @@ public class EnhancedTalonFX extends TalonFX {
    * @return output units
    */
   public double getEncoderPosition() {
-    return ticksToOutput(getRotorPosition().getValue());
+    return getRotorPosition().getValue().in(Units.Degrees);
   }
 
   /**
@@ -70,7 +72,7 @@ public class EnhancedTalonFX extends TalonFX {
    * @return output units / sec
    */
   public double getEncoderVelocity() {
-    return ticksToOutput(getRotorVelocity().getValue());
+    return getRotorVelocity().getValue().in(Units.DegreesPerSecond);
   }
 
   /**

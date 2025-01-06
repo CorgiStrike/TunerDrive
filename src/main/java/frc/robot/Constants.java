@@ -6,7 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
 
 import frc.robot.Motors.talonfx.PIDSVGains;
 import frc.robot.Vision.DefaultPostProcessor;
@@ -42,8 +42,15 @@ public final class Constants {
   
   public static class AutoConstants
   {
-    public static final PIDConstants TRANSLATION_PID = new PIDConstants(2, 0.0, 0.0);
-    public static final PIDConstants ANGLE_PID   = new PIDConstants(0.6, 0, 0.01);
+    public static RobotConfig config;
+    static {
+      try{
+          config = RobotConfig.fromGUISettings();
+      } catch (Exception e) {
+          // Handle exception as needed
+          e.printStackTrace();
+      }
+    }
   }
 
   public static class Drivetrain {

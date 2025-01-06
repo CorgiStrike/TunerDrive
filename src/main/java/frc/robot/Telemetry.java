@@ -1,7 +1,7 @@
 package frc.robot;
 
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain.SwerveDriveState;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveDrivetrain.LegacySwerveDriveState;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -78,7 +78,7 @@ public class Telemetry {
     };
 
     /* Accept the swerve drive state and telemeterize it to smartdashboard */
-    public void telemeterize(SwerveDriveState state) {
+    public void telemeterize(LegacySwerveDriveState state) {
         /* Telemeterize the pose */
         Pose2d pose = state.Pose;
         field.setRobotPose(new Pose2d(pose.getX()/2,pose.getY()/2,pose.getRotation()));
