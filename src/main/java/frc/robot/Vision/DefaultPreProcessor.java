@@ -27,9 +27,12 @@ public class DefaultPreProcessor implements Preprocessor {
         * Clamp received vision timestamps to not pass the RIO time
         * If vision timestamps desync from the RIO, the pose estimate will have huge spasms
         * Issue for almost all of 2024 season - fixed at Champs 2024
+        *
+        * UPDATE: 1/6/2024
+        * Removed because PhotonPipelineResult.getTimestampSeconds() was removed
         */
-        in.setTimestampSeconds(
-            Math.min(Timer.getFPGATimestamp(), in.getTimestampSeconds()));
+        /*in.setTimestampSeconds(
+            Math.min(Timer.getFPGATimestamp(), in.getTimestampSeconds()));*/
 
         in.targets.removeIf((target) -> addAndComputeAverage(target.getFiducialId(), target.getPoseAmbiguity()) > ambiguityThreshold);
 

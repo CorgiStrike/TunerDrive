@@ -72,7 +72,6 @@ public class Vision {
             this.photonPoseEstimator = new PhotonPoseEstimator(
                 FIELD_LAYOUT,
                 PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                camera,
                 new Transform3d(new Pose3d(), cam.pose));
         }
 
