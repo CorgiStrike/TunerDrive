@@ -64,7 +64,7 @@ public final class Constants {
     static {
       try {
         FIELD_LAYOUT =
-            AprilTagFieldLayout.loadFromResource(AprilTagFields.kDefaultField.m_resourceFile);
+            AprilTagFieldLayout.loadFromResource(AprilTagFields.k2025Reefscape.m_resourceFile);
       } catch (Exception e) {
         throw new RuntimeException("Could not load AprilTag field layout from WPI");
       }

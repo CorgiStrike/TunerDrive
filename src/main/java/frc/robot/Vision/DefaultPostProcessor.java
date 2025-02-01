@@ -37,7 +37,7 @@ public class DefaultPostProcessor implements Postprocessor {
 
         // make the std dev greater based on how far away the tags are (trust estimates from further
         // tags less)
-        // algorithm from frc6328 - Mechanical Advantage my beloved
+        // algorithm from frc6328 - Mechanical Advantage
 
         for (var tag : pose.targetsUsed) {
             var tagOnField = fieldLayout.getTagPose(tag.getFiducialId());
