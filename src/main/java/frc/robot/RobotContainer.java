@@ -12,9 +12,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PWM;
+import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.SMF.StateMachine;
 import frc.robot.controllers.RealControllerBindings;
@@ -24,6 +27,8 @@ import frc.robot.subsystems.Drivetrain.CommandSwerveDrivetrain;
 
 public class RobotContainer extends StateMachine<RobotContainer.State>{
   private RealControllerBindings controllerBindings = new RealControllerBindings();
+
+  private final PWM fan = new PWM(9);
 
   //initialize subsystems
   private final BooleanSupplier flipPath = () ->{var alliance = DriverStation.getAlliance();
@@ -72,6 +77,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   private void registerStateTransitions() {
     addOmniTransition(State.SOFT_E_STOP);
     addOmniTransition(State.TRAVERSING);
+    addOmniTransition(State.TEST);
   }
 
   private void registerStateCommands() {
@@ -82,6 +88,10 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     registerStateCommand(State.TRAVERSING, new ParallelCommandGroup(
       drivetrain.transitionCommand(CommandSwerveDrivetrain.State.TRAVERSING)
     ));
+
+    registerStateCommand(State.TEST, new RunCommand(()->{
+      fan.setSpeed(0.5);
+    }));
   }
 
   @Override
@@ -94,6 +104,10 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
     requestTransition(State.TRAVERSING);
   }
 
+  protected void onTestStart() {
+    requestTransition(State.TEST);
+  }
+
   @Override
   protected void update() {
     
@@ -102,6 +116,7 @@ public class RobotContainer extends StateMachine<RobotContainer.State>{
   public enum State {
     UNDETERMINED,
     SOFT_E_STOP,
-    TRAVERSING
+    TRAVERSING,
+    TEST
   }
 }
